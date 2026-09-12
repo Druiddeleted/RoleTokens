@@ -27,17 +27,17 @@ end
 
 local function help()
     out("usage:")
-    out("  /rt            - show resolved tokens and managed macros")
-    out("  /rt refresh    - re-scan macros and rewrite now")
-    out("  /rt forget <MacroName> - stop managing a macro (its current text stays)")
-    out("  /rt pin <token> <Name>  - e.g. /rt pin healer Moonwell; that player is @healer whenever grouped")
-    out("  /rt unpin <token>       - clear a pin")
-    out("  /rt quiet | /rt verbose - toggle chat notices")
+    out("  /rtk            - show resolved tokens and managed macros")
+    out("  /rtk refresh    - re-scan macros and rewrite now")
+    out("  /rtk forget <MacroName> - stop managing a macro (its current text stays)")
+    out("  /rtk pin <token> <Name>  - e.g. /rtk pin healer Moonwell; that player is @healer whenever grouped")
+    out("  /rtk unpin <token>       - clear a pin")
+    out("  /rtk quiet | /rtk verbose - toggle chat notices")
     out("tokens: @tank @tank2 @healer @healer2. In raids the assigned main tank is @tank.")
 end
 
-SLASH_ROLETOKENS1 = "/rt"
-SLASH_ROLETOKENS2 = "/roletokens"
+SLASH_ROLETOKENS1 = "/roletokens"
+SLASH_ROLETOKENS2 = "/rtk"
 SlashCmdList.ROLETOKENS = function(msg)
     msg = (msg or ""):gsub("^%s+", ""):gsub("%s+$", "")
     local cmd, rest = msg:match("^(%S+)%s*(.*)$")
@@ -59,7 +59,7 @@ SlashCmdList.ROLETOKENS = function(msg)
         for _, t in ipairs(Expand.TOKENS) do if t == token then valid = true end end
         if not valid then out("token must be one of: tank, tank2, healer, healer2") return end
         if cmd == "pin" then
-            if name == "" then out("pin whom? /rt pin %s <Name>", token) return end
+            if name == "" then out("pin whom? /rtk pin %s <Name>", token) return end
             DB.SetPin(token, name)
             out("@%s pinned to |cffffff00%s|r", token, name)
         else

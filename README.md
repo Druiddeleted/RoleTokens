@@ -22,7 +22,7 @@ always names the right unit. Your focus is never touched.
    as soon as combat ends.
 
 To change the template later, edit the macro and put the token back in. To
-stop managing it, edit the macro with no token, or `/rt forget <name>`.
+stop managing it, edit the macro with no token, or `/rtk forget <name>`.
 
 ## Tokens
 
@@ -41,9 +41,9 @@ You are never chosen for a token. When a token has nobody to resolve to, its
 Raid index order is arbitrary, so pin who you mean, per character:
 
 ```
-/rt pin healer Moonwell      # @healer is Moonwell whenever they're in the group
-/rt pin tank Brutall
-/rt unpin healer
+/rtk pin healer Moonwell      # @healer is Moonwell whenever they're in the group
+/rtk pin tank Brutall
+/rtk unpin healer
 ```
 
 A pinned player takes the slot even if their role differs (you asked for them
@@ -52,11 +52,11 @@ by name). Absent pins fall back to the default order.
 ## Commands
 
 ```
-/rt                      status: resolved tokens and managed macros
-/rt refresh              re-scan and rewrite now
-/rt forget <MacroName>   stop managing (current text stays)
-/rt pin <token> <Name>   /rt unpin <token>
-/rt quiet | verbose      chat notices
+/rtk                      status: resolved tokens and managed macros
+/rtk refresh              re-scan and rewrite now
+/rtk forget <MacroName>   stop managing (current text stays)
+/rtk pin <token> <Name>   /rtk unpin <token>
+/rtk quiet | verbose      chat notices
 ```
 
 ## Who this is for
