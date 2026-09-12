@@ -36,34 +36,21 @@ function Expand.HasToken(body)
     return false
 end
 
--- Replace tokens within one piece of text. Returns text and whether any token
--- could not be resolved (so the caller can decide to drop the whole clause).
-local function substitute(text, units)
-    local missing = false
-    local out = text:gsub("@(%w+)", function(word)
-        local role, slot = Expand.ParseToken(word)
-        if not role then return nil end                -- leave unrelated "@foo" alone
-        local unit = units[Expand.Key(role, slot)]
-        if unit then return "@" .. unit end
-        missing = true
-        return "@none"
-    end)
-    return out, missing
-end
-
 -- Expand a template into a live macro body.
 --   units: { tank1 = "party3", healer2 = "raid12", ... } — absent keys are unresolved.
--- Rules:
---   * inside a [conditional] group, an unresolved token deletes the whole group
---     (and the whitespace after it) so the macro falls through to the next clause;
---   * outside brackets an unresolved token becomes "@none", which never exists.
+-- An unresolved token becomes "@none": a unit that never exists, so a clause
+-- like [@none,exists,nodead] fails and the macro falls through to the next one.
+-- The clause itself is kept so the macro still reads as written on the macro
+-- page. (A clause without "exists" would try to cast at @none and error rather
+-- than fall through, but that clause was already wrong for a missing tank.)
+Expand.UNRESOLVED = "none"
+
 function Expand.Body(template, units)
     if not template then return template end
-    local body = template:gsub("(%[[^%]]*%])(%s*)", function(group, ws)
-        local out, missing = substitute(group, units)
-        if missing then return "" end
-        return out .. ws
+    local body = template:gsub("@(%w+)", function(word)
+        local role, slot = Expand.ParseToken(word)
+        if not role then return nil end                -- leave unrelated "@foo" alone
+        return "@" .. (units[Expand.Key(role, slot)] or Expand.UNRESOLVED)
     end)
-    body = substitute(body, units)
     return body
 end

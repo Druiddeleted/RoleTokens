@@ -28,10 +28,10 @@ eq(E.Body(md, { tank1 = "party3" }),
    "#showtooltip\n/cast [@party3,exists,nodead] [@mouseover,exists,help,nodead] [@party1,exists,nodead] [@pet,exists,nodead] [] Misdirection",
    "substitutes tank")
 eq(E.Body(md, {}),
-   "#showtooltip\n/cast [@mouseover,exists,help,nodead] [@party1,exists,nodead] [@pet,exists,nodead] [] Misdirection",
-   "drops the whole clause when unresolved")
+   "#showtooltip\n/cast [@none,exists,nodead] [@mouseover,exists,help,nodead] [@party1,exists,nodead] [@pet,exists,nodead] [] Misdirection",
+   "unresolved token becomes @none, clause kept")
 eq(E.Body("/cast [@tank1] [@healer] [] Innervate", { healer1 = "raid7" }),
-   "/cast [@raid7] [] Innervate", "mixed resolved/unresolved")
+   "/cast [@none] [@raid7] [] Innervate", "mixed resolved/unresolved")
 eq(E.Body("/cast [@Tank,exists] X", { tank1 = "party2" }), "/cast [@party2,exists] X", "case-insensitive substitution")
 eq(E.Body("/tar @tank", {}), "/tar @none", "bare token becomes @none")
 eq(E.Body("/tar @tank", { tank1 = "raid3" }), "/tar @raid3", "bare token substituted")

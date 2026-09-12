@@ -35,8 +35,11 @@ stop managing it, edit the macro with no token, or `/rtk forget <name>`.
 
 Slots go up to 40 per role, so a raid of nothing but healers still resolves.
 
-You are never chosen for a token. When a token has nobody to resolve to, its
-`[...]` clause is removed so the macro falls through to the next one.
+You are never chosen for a token. When a token has nobody to resolve to it is
+written as `@none`, a unit that never exists, so `[@none,exists,nodead]` fails
+and the macro falls through to the next clause. Always pair a token with
+`exists`; a bare `[@tank]` would try to cast at nobody instead of falling
+through.
 
 ## Raids: choosing between several tanks or healers
 
