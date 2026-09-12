@@ -1,0 +1,14 @@
+## Interface: 120100
+## Title: RoleTokens
+## Notes: Write @tank / @healer in your macros and let the addon fill in the real unit whenever your group changes.
+## Author: Druiddeleted
+## Version: 0.1.0
+## IconTexture: Interface\Icons\Ability_Hunter_Misdirection
+## SavedVariables: RoleTokensDB
+
+src\db.lua
+src\expand.lua
+src\resolve.lua
+src\macros.lua
+src\commands.lua
+src\core.lua

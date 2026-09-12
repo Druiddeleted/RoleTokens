@@ -1,0 +1,15 @@
+package-as: RoleTokens
+
+# Files/dirs to omit from the published zip.
+ignore:
+  - .github
+  - .gitignore
+  - .pkgmeta
+  - CLAUDE.md
+  - scripts
+  - LICENSE.md
+  - README.md
+  - "*.psd"
+  - "*.xcf"
+
+manual-changelog: RELEASE_NOTES.md
