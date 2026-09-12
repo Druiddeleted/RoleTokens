@@ -26,12 +26,14 @@ stop managing it, edit the macro with no token, or `/rtk forget <name>`.
 
 ## Tokens
 
-| Token      | Resolves to                                                  |
-|------------|--------------------------------------------------------------|
-| `@tank`    | pinned tank, else raid main tank assignment, else first tank |
-| `@tank2`   | the next tank                                                |
-| `@healer`  | pinned healer, else first healer by raid/party index         |
-| `@healer2` | the next healer                                              |
+| Token                 | Resolves to                                                  |
+|-----------------------|--------------------------------------------------------------|
+| `@tank` / `@tank1`    | pinned tank, else raid main tank assignment, else first tank |
+| `@tank2` … `@tank40`  | the next tanks, by raid/party index                          |
+| `@healer` … `@healer40` | healers, pinned first, then by index                       |
+| `@dps` … `@dps40`     | damage dealers, same rules                                   |
+
+Slots go up to 40 per role, so a raid of nothing but healers still resolves.
 
 You are never chosen for a token. When a token has nobody to resolve to, its
 `[...]` clause is removed so the macro falls through to the next one.
@@ -47,7 +49,8 @@ Raid index order is arbitrary, so pin who you mean, per character:
 ```
 
 A pinned player takes the slot even if their role differs (you asked for them
-by name). Absent pins fall back to the default order.
+by name). Everyone else fills the remaining slots in order. Absent pins fall
+back to the default order.
 
 ## Commands
 

@@ -4,18 +4,34 @@ local Expand = NS.Expand
 
 -- Pure text transform: no frames, no WoW API. Loadable under plain Lua for tests.
 --
--- A token is "@" + a known name, case-insensitive, not followed by another
--- word character (so "@tank" matches, "@tanky" does not). Known names:
-Expand.TOKENS = { "tank", "tank2", "healer", "healer2" }
+-- A token is "@" + role + optional slot number, case-insensitive:
+--   @tank  @tank1 ... @tank40   (@tank == @tank1)
+--   @healer @healer1 ... @healer40
+--   @dps    @dps1   ... @dps40
+-- "@tanky" is not a token (the word must end after the digits).
+Expand.ROLES = { "tank", "healer", "dps" }
+Expand.MAX_SLOT = 40
 
-local known = {}
-for _, t in ipairs(Expand.TOKENS) do known[t] = true end
+local isRole = {}
+for _, r in ipairs(Expand.ROLES) do isRole[r] = true end
+
+-- "@Tank12" -> "tank", 12 ; anything else -> nil
+function Expand.ParseToken(word)
+    local role, num = word:lower():match("^(%a+)(%d*)$")
+    if not role or not isRole[role] then return nil end
+    local slot = tonumber(num) or 1
+    if num == "" then slot = 1 elseif slot < 1 or slot > Expand.MAX_SLOT then return nil end
+    return role, slot
+end
+
+-- Canonical key used in the units table and for pins: "tank1", "healer3", ...
+function Expand.Key(role, slot) return role .. slot end
 
 -- Does this macro body contain any token at all?
 function Expand.HasToken(body)
     if not body then return false end
-    for name in body:gmatch("@(%w+)") do
-        if known[name:lower()] then return true end
+    for word in body:gmatch("@(%w+)") do
+        if Expand.ParseToken(word) then return true end
     end
     return false
 end
@@ -24,10 +40,10 @@ end
 -- could not be resolved (so the caller can decide to drop the whole clause).
 local function substitute(text, units)
     local missing = false
-    local out = text:gsub("@(%w+)", function(name)
-        local key = name:lower()
-        if not known[key] then return nil end          -- leave unrelated "@foo" alone
-        local unit = units[key]
+    local out = text:gsub("@(%w+)", function(word)
+        local role, slot = Expand.ParseToken(word)
+        if not role then return nil end                -- leave unrelated "@foo" alone
+        local unit = units[Expand.Key(role, slot)]
         if unit then return "@" .. unit end
         missing = true
         return "@none"
@@ -36,7 +52,7 @@ local function substitute(text, units)
 end
 
 -- Expand a template into a live macro body.
---   units: { tank = "party3", healer = "raid12", ... } — absent keys are unresolved.
+--   units: { tank1 = "party3", healer2 = "raid12", ... } — absent keys are unresolved.
 -- Rules:
 --   * inside a [conditional] group, an unresolved token deletes the whole group
 --     (and the whitespace after it) so the macro falls through to the next clause;

@@ -1,6 +1,7 @@
 local ADDON_NAME, NS = ...
 NS.Resolve = {}
 local Resolve = NS.Resolve
+local Expand = NS.Expand
 
 -- Group-state lookup only: roles and raid assignments are ordinary group
 -- data, not combat data, so Secret Values don't apply here. Still, we only
@@ -16,12 +17,6 @@ local function groupUnits()
     return units
 end
 
--- Returns { tank = unit, tank2 = unit, healer = unit, healer2 = unit } with
--- only the resolved keys present. In a raid the assigned main tank is always
--- @tank; otherwise order follows raid/party index.
--- pins: { tank = "Name", healer = "Name" } — a pinned player, if present in
--- the group, takes that slot regardless of index or role; the rest shift down.
--- Precedence for slot 1: pin > raid main tank assignment > lowest raid index.
 local function sameName(unit, name)
     local n, realm = UnitName(unit)
     if not n then return false end
@@ -29,47 +24,66 @@ local function sameName(unit, name)
     return realm and realm ~= "" and (n .. "-" .. realm) == name
 end
 
+local ROLE_OF = { TANK = "tank", HEALER = "healer", DAMAGER = "dps" }
+
+-- Returns { tank1 = unit, tank2 = unit, ..., healer1 = unit, ..., dps1 = unit, ... }
+-- with only the resolved keys present.
+--
+-- Slot order per role: pinned players first, in their pinned slots; then the
+-- raid main tank (for tanks); then raid/party index. A pinned player who is in
+-- the group takes their slot regardless of role (you asked for them by name).
+--   pins: { tank1 = "Name", healer3 = "Name", ... }
 function Resolve.Units(dropSelf, pins)
     pins = pins or {}
-    local tanks, healers, all = {}, {}, {}
+    local byRole, all = { tank = {}, healer = {}, dps = {} }, {}
     local inRaid = IsInRaid()
     for _, unit in ipairs(groupUnits()) do
         if not (dropSelf and UnitIsUnit(unit, "player")) then
             all[#all + 1] = unit
-            local role = UnitGroupRolesAssigned(unit)
-            if role == "TANK" then
-                if inRaid and GetPartyAssignment("MAINTANK", unit) then
-                    table.insert(tanks, 1, unit)
+            local role = ROLE_OF[UnitGroupRolesAssigned(unit)]
+            if role then
+                local list = byRole[role]
+                if role == "tank" and inRaid and GetPartyAssignment("MAINTANK", unit) then
+                    table.insert(list, 1, unit)
                 else
-                    tanks[#tanks + 1] = unit
+                    list[#list + 1] = unit
                 end
-            elseif role == "HEALER" then
-                healers[#healers + 1] = unit
             end
         end
     end
-    -- A pinned player who is in the group but not in that role list still
-    -- wins the slot (you asked for them by name), so search the whole group.
-    local function pinned(name)
-        if not name then return nil end
+
+    local function findByName(name)
         for _, unit in ipairs(all) do
             if sameName(unit, name) then return unit end
         end
     end
-    local function pick(list, pin1, pin2)
-        local first, second = pinned(pin1), pinned(pin2)
-        local rest = {}
-        for _, u in ipairs(list) do
-            if u ~= first and u ~= second then rest[#rest + 1] = u end
+
+    local out = {}
+    for _, role in ipairs(Expand.ROLES) do
+        -- 1. pins claim their slots
+        local taken = {}
+        local maxSlot = 0
+        for slot = 1, Expand.MAX_SLOT do
+            local name = pins[Expand.Key(role, slot)]
+            local unit = name and findByName(name)
+            if unit and not taken[unit] then
+                out[Expand.Key(role, slot)] = unit
+                taken[unit] = true
+                maxSlot = slot
+            end
         end
-        first = first or table.remove(rest, 1)
-        second = second or table.remove(rest, 1)
-        if first == second then second = table.remove(rest, 1) end
-        return first, second
+        -- 2. everyone else with the role fills the remaining slots in order
+        local slot = 1
+        for _, unit in ipairs(byRole[role]) do
+            if not taken[unit] then
+                while out[Expand.Key(role, slot)] do slot = slot + 1 end
+                if slot > Expand.MAX_SLOT then break end
+                out[Expand.Key(role, slot)] = unit
+                taken[unit] = true
+            end
+        end
     end
-    local t1, t2 = pick(tanks, pins.tank, pins.tank2)
-    local h1, h2 = pick(healers, pins.healer, pins.healer2)
-    return { tank = t1, tank2 = t2, healer = h1, healer2 = h2 }
+    return out
 end
 
 -- Human-readable "party3 (Brutall)" for status output.

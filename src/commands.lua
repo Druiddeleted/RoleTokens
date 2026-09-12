@@ -8,12 +8,19 @@ local function out(fmt, ...) print(TAG .. fmt:format(...)) end
 local function status()
     local units = Macros.lastUnits or {}
     out("current tokens:")
-    for _, t in ipairs(Expand.TOKENS) do
-        out("  @%-8s -> %s", t, Resolve.Describe(units[t]))
-    end
     local pins = DB.Pins()
-    for _, t in ipairs(Expand.TOKENS) do
-        if pins[t] then out("  pinned @%s = %s", t, pins[t]) end
+    for _, role in ipairs(Expand.ROLES) do
+        local shown = false
+        for slot = 1, Expand.MAX_SLOT do
+            local key = Expand.Key(role, slot)
+            local unit, pin = units[key], pins[key]
+            if unit or pin then
+                shown = true
+                out("  @%-9s -> %s%s", key, Resolve.Describe(unit),
+                    pin and ("  |cff888888pinned: " .. pin .. "|r") or "")
+            end
+        end
+        if not shown then out("  @%-9s -> %s", role, Resolve.Describe(nil)) end
     end
     local any = false
     DB.Each(function(scope, name, entry)
@@ -33,7 +40,8 @@ local function help()
     out("  /rtk pin <token> <Name>  - e.g. /rtk pin healer Moonwell; that player is @healer whenever grouped")
     out("  /rtk unpin <token>       - clear a pin")
     out("  /rtk quiet | /rtk verbose - toggle chat notices")
-    out("tokens: @tank @tank2 @healer @healer2. In raids the assigned main tank is @tank.")
+    out("tokens: @tank/@tankN, @healer/@healerN, @dps/@dpsN for N up to 40 (@tank = @tank1).")
+    out("in raids the assigned main tank is @tank unless something is pinned there.")
 end
 
 SLASH_ROLETOKENS1 = "/roletokens"
@@ -53,11 +61,10 @@ SlashCmdList.ROLETOKENS = function(msg)
         if Macros.Forget(rest) then out("no longer managing |cffffff00%s|r", rest)
         else out("not managing any macro named |cffffff00%s|r", rest) end
     elseif cmd == "pin" or cmd == "unpin" then
-        local token, name = rest:match("^@?(%S+)%s*(.*)$")
-        token = (token or ""):lower()
-        local valid = false
-        for _, t in ipairs(Expand.TOKENS) do if t == token then valid = true end end
-        if not valid then out("token must be one of: tank, tank2, healer, healer2") return end
+        local word, name = rest:match("^@?(%S+)%s*(.*)$")
+        local role, slot = Expand.ParseToken(word or "")
+        if not role then out("token must be tank, healer or dps, optionally numbered 1-%d", Expand.MAX_SLOT) return end
+        local token = Expand.Key(role, slot)
         if cmd == "pin" then
             if name == "" then out("pin whom? /rtk pin %s <Name>", token) return end
             DB.SetPin(token, name)
