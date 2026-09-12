@@ -7,4 +7,4 @@
   group changes.
 - Raid main tank assignment is promoted to `@tank`; `/rt pin` overrides ordering
   per character.
-- Unresolved tokens become `@none` so the clause fails and the macro falls through.
+- Unresolved tokens are left as written; the clause fails and the macro falls through.

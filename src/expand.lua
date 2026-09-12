@@ -38,19 +38,21 @@ end
 
 -- Expand a template into a live macro body.
 --   units: { tank1 = "party3", healer2 = "raid12", ... } — absent keys are unresolved.
--- An unresolved token becomes "@none": a unit that never exists, so a clause
--- like [@none,exists,nodead] fails and the macro falls through to the next one.
--- The clause itself is kept so the macro still reads as written on the macro
--- page. (A clause without "exists" would try to cast at @none and error rather
--- than fall through, but that clause was already wrong for a missing tank.)
-Expand.UNRESOLVED = "none"
-
+-- An unresolved token is left exactly as written: "tank" is not a unit, so
+-- [@tank,exists,nodead] fails and the macro falls through to the next clause,
+-- and the macro page still reads the way you wrote it. (A clause without
+-- "exists" would try to cast at nobody and error rather than fall through,
+-- but that clause was already wrong for a missing tank.)
+--
+-- Because the live macro can therefore still contain tokens, the scanner must
+-- not mistake our own output for a hand-edited template: see Macros.Sync.
 function Expand.Body(template, units)
     if not template then return template end
     local body = template:gsub("@(%w+)", function(word)
         local role, slot = Expand.ParseToken(word)
         if not role then return nil end                -- leave unrelated "@foo" alone
-        return "@" .. (units[Expand.Key(role, slot)] or Expand.UNRESOLVED)
+        local unit = units[Expand.Key(role, slot)]
+        return unit and ("@" .. unit) or nil
     end)
     return body
 end

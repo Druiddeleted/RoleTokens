@@ -28,12 +28,11 @@ eq(E.Body(md, { tank1 = "party3" }),
    "#showtooltip\n/cast [@party3,exists,nodead] [@mouseover,exists,help,nodead] [@party1,exists,nodead] [@pet,exists,nodead] [] Misdirection",
    "substitutes tank")
 eq(E.Body(md, {}),
-   "#showtooltip\n/cast [@none,exists,nodead] [@mouseover,exists,help,nodead] [@party1,exists,nodead] [@pet,exists,nodead] [] Misdirection",
-   "unresolved token becomes @none, clause kept")
-eq(E.Body("/cast [@tank1] [@healer] [] Innervate", { healer1 = "raid7" }),
-   "/cast [@none] [@raid7] [] Innervate", "mixed resolved/unresolved")
+   md, "unresolved token is left as written")
+eq(E.Body("/cast [@Tank1] [@healer] [] Innervate", { healer1 = "raid7" }),
+   "/cast [@Tank1] [@raid7] [] Innervate", "mixed resolved/unresolved keeps original spelling")
 eq(E.Body("/cast [@Tank,exists] X", { tank1 = "party2" }), "/cast [@party2,exists] X", "case-insensitive substitution")
-eq(E.Body("/tar @tank", {}), "/tar @none", "bare token becomes @none")
+eq(E.Body("/tar @tank", {}), "/tar @tank", "bare unresolved token untouched")
 eq(E.Body("/tar @tank", { tank1 = "raid3" }), "/tar @raid3", "bare token substituted")
 eq(E.Body("/cast [@healer12] X", { healer12 = "raid40" }), "/cast [@raid40] X", "high slot")
 eq(E.Body("/cast [@focus,harm] Kick", { tank1 = "party1" }), "/cast [@focus,harm] Kick", "untouched macro unchanged")

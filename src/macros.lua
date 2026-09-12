@@ -28,7 +28,10 @@ local pendingAfterCombat = false
 Macros.lastUnits = {}
 
 -- One pass over every macro:
---   * a body containing a token becomes (or replaces) that macro's template;
+--   * a body containing a token that is not what we last wrote becomes (or
+--     replaces) that macro's template — unresolved tokens stay in the live
+--     text, so "what we last wrote" is the only way to tell our output from
+--     a hand edit;
 --   * a managed macro whose body we didn't write and that has no token has
 --     been hand-edited away, so we stop managing it;
 --   * every managed macro is rewritten to match the current group.
@@ -42,13 +45,14 @@ function Macros.Sync(reason)
 
     eachMacro(function(index, scope, name, icon, body)
         local entry = DB.Get(scope, name)
-        if Expand.HasToken(body) then
+        local ours = entry and body == entry.lastBody
+        if Expand.HasToken(body) and not ours then
             if not entry or entry.template ~= body then
                 entry = { template = body }
                 DB.Set(scope, name, entry)
                 say("now managing macro |cffffff00%s|r", name)
             end
-        elseif entry and body ~= entry.lastBody then
+        elseif entry and not ours then
             DB.Forget(scope, name)
             say("macro |cffffff00%s|r was edited without a token; no longer managing it", name)
             return
