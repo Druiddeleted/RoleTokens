@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0
 
 - Custom tokens: `/rtk token pi add target` creates `@pi`, resolved from an
   ordered list of people who are in your group, with `@pi2`, `@pi3` for the

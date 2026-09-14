@@ -2,7 +2,7 @@
 ## Title: RoleTokens
 ## Notes: Macros that know who your tank is, and who you Power Infusion. Write @tank or @pi and it is rewritten to the real unit as your group changes.
 ## Author: Druiddeleted
-## Version: 0.1.0
+## Version: 0.2.0
 ## IconTexture: Interface\Icons\Ability_Hunter_Misdirection
 ## SavedVariables: RoleTokensDB, RoleTokensLog
 

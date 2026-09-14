@@ -158,12 +158,14 @@ is on, or was last seen on.
 
 Options, AddOns, RoleTokens. Or `/rtk ui`, or the minimap button.
 
-Left side: the built-in tokens, then yours. Right side: the selected token's
-list. A green dot means that person is in your group and counts right now,
-and the slot they fill is shown at the end of the row. A grey dot with a
-reason (`not in group`, `healing · skipped`, `excluded`) means they don't.
-The bottom line shows what each slot resolves to at this moment, which is the
-quickest way to answer "why did my macro pick Carol".
+Left side: the built-in tokens, then yours, and a **+ New token** button that
+checks the name as you type. Right side: the selected token's list, one
+person per row with their name on top and what's going on underneath. A green
+dot means they're in your group and count right now, and the slot they fill
+is shown at the end of the row. A grey dot with a reason (`not in group`,
+`healing · skipped`, `excluded`) means they don't. The line at the bottom
+shows what each slot resolves to at this moment, which is the quickest way to
+answer "why did my macro pick Carol".
 
 The **+ Add** button opens a picker over your group, your online friends and
 your online guild members, with a search box. Typing a name that matches
