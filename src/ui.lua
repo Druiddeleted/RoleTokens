@@ -99,7 +99,7 @@ local function getRow(i)
     r.label = r:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(150); r.label:SetJustifyH("LEFT")
     r.status = r:CreateFontString(nil, "OVERLAY", "GameFontDisable")
-    r.status:SetPoint("LEFT", 200, 0); r.status:SetPoint("RIGHT", -110, 0); r.status:SetJustifyH("LEFT")
+    r.status:SetPoint("LEFT", 200, 0); r.status:SetJustifyH("LEFT"); r.status:SetWordWrap(false)
     r.slot = r:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     r.slot:SetPoint("RIGHT", -8, 0)
     r.del = makeIconButton(r, "Interface\\RaidFrame\\ReadyCheck-NotReady", 16, function() r.onDelete() end)
@@ -111,6 +111,7 @@ local function getRow(i)
     r.role = CreateFrame("Button", nil, r)
     r.role:SetSize(52, 18)
     r.role:SetPoint("RIGHT", r.up, "LEFT", -6, -4)
+    r.status:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
     r.role.text = r.role:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
     r.role.text:SetPoint("CENTER")
     r.role:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
@@ -164,16 +165,19 @@ local function paintRows()
             local editable = line.kind == "entry"
             r.up:SetShown(editable); r.down:SetShown(editable)
             r.role:SetShown(editable)
-            if editable then r.role.text:SetText(line.entry.role and ("|cffffd100" .. line.entry.role .. "|r") or "any") end
+            r.status:ClearAllPoints()
+            r.status:SetPoint("LEFT", line.kind == "except" and 100 or 200, 0)
+            if editable then
+                r.role.text:SetText(line.entry.role and ("|cffffd100" .. line.entry.role .. "|r") or "any")
+                r.status:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
+            elseif line.kind == "except" then
+                r.status:SetPoint("RIGHT", r.del, "LEFT", -6, 0)
+            else
+                r.status:SetPoint("RIGHT", -8, 0)
+            end
             r.del:SetShown(editable or line.kind == "except")
             if line.slot then r.del:ClearAllPoints(); r.del:SetPoint("RIGHT", r.slot, "LEFT", -10, 0)
             else r.del:ClearAllPoints(); r.del:SetPoint("RIGHT", -8, 0) end
-            if line.kind == "except" then
-                r.label:ClearAllPoints(); r.label:SetPoint("LEFT", 46, 0)
-                r.status:SetPoint("LEFT", 100, 0)
-            else
-                r.status:SetPoint("LEFT", 200, 0)
-            end
             r.onMove = function(dir)
                 local token = DB.Token(selected)
                 if token and DB.MoveEntry(token, line.index, line.index + dir) then Macros.Sync("token changed") end
