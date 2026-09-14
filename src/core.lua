@@ -25,6 +25,8 @@ f:SetScript("OnEvent", function(_, event, arg1)
     if event == "ADDON_LOADED" then
         if arg1 == ADDON_NAME then DB.Init() end
     elseif event == "PLAYER_LOGIN" then
+        for _, line in ipairs(DB.TakeNotices()) do Macros.Say(line) end
+        if NS.Menu then NS.Menu.Init() end
         f:RegisterEvent("GROUP_ROSTER_UPDATE")
         f:RegisterEvent("PLAYER_ROLES_ASSIGNED")
         f:RegisterEvent("ROLE_CHANGED_INFORM")

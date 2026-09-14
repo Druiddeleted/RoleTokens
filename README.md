@@ -1,11 +1,13 @@
 # RoleTokens
 
-Write `@tank` or `@healer` in a macro and stop editing it every run.
+Write `@tank`, `@healer`, or your own `@pi` in a macro and stop editing it
+every run.
 
 WoW macros only know fixed unit tokens (`@focus`, `@party1`, …). There is no
-`@tank`. RoleTokens fills that gap the only way the client allows: it watches
-your group and rewrites the macro text out of combat, so the macro on your bar
-always names the right unit. Your focus is never touched.
+`@tank`, and there is certainly no "@the person I Power Infusion". RoleTokens
+fills that gap the only way the client allows: it watches your group and
+rewrites the macro text out of combat, so the macro on your bar always names
+the right unit. Your focus is never touched.
 
 ## Use
 
@@ -24,67 +26,92 @@ always names the right unit. Your focus is never touched.
 To change the template later, edit the macro and put the token back in. To
 stop managing it, edit the macro with no token, or `/rtk forget <name>`.
 
-The addon tells its own output apart from your edits by remembering the last
-text it wrote. If that record is lost (a client crash before SavedVariables
-were written), a macro that still shows a partly resolved mix like
-`[@tank] [@raid7]` would be re-adopted as-is. Put the tokens back and save.
+## Built-in tokens: by role
 
-## Tokens
+| Token                   | Resolves to                                      |
+|-------------------------|--------------------------------------------------|
+| `@tank` / `@tank1`      | raid main tank assignment, else first tank       |
+| `@tank2` … `@tank40`    | the next tanks, by raid/party index              |
+| `@healer` … `@healer40` | healers by index                                 |
+| `@dps` … `@dps40`       | damage dealers by index                          |
 
-| Token                 | Resolves to                                                  |
-|-----------------------|--------------------------------------------------------------|
-| `@tank` / `@tank1`    | pinned tank, else raid main tank assignment, else first tank |
-| `@tank2` … `@tank40`  | the next tanks, by raid/party index                          |
-| `@healer` … `@healer40` | healers, pinned first, then by index                       |
-| `@dps` … `@dps40`     | damage dealers, same rules                                   |
+## Your tokens: by priority list
 
-Slots go up to 40 per role, so a raid of nothing but healers still resolves.
-
-You are never chosen for a token. When a token has nobody to resolve to it is
-left exactly as you wrote it: `tank` is not a unit, so `[@tank,exists,nodead]`
-fails and the macro falls through to the next clause. Always pair a token with
-`exists`; a bare `[@tank]` would try to cast at nobody instead of falling
-through.
-
-## Raids: choosing between several tanks or healers
-
-Raid index order is arbitrary, so pin who you mean, per character:
+A custom token is a name you choose backed by an ordered list of people.
+`@pi` is the first person on the list who is in your group; `@pi2` is the
+second. Optionally the token only counts people while they play a given role.
 
 ```
-/rtk pin healer Moonwell      # @healer is Moonwell whenever they're in the group
-/rtk pin tank Brutall
-/rtk unpin healer
+/rtk token pi add target           # whoever you're targeting
+/rtk token pi add Moonwell         # by name (Name-Realm for other realms)
+/rtk token pi add friend Bob       # a Battle.net friend, on whichever alt they bring
+/rtk token pi role dps             # skip them while they're healing or tanking
+/rtk token pi                      # see the list and who resolves right now
 ```
 
-A pinned player takes the slot even if their role differs (you asked for them
-by name). Everyone else fills the remaining slots in order. Absent pins fall
-back to the default order.
+Or open the window with `/rtk ui`, or right-click any player, friends-list
+row or guild-roster row and pick **Add … to @pi**.
+
+Fallbacks belong to the macro, because the client evaluates conditionals at
+cast time and the addon can only decide who is who:
+
+```
+/cast [@pi,exists,nodead] [@pi2,exists,nodead] [@dps,exists,nodead] [] Power Infusion
+```
+
+That reads "my first choice, else my second if the first is dead, else any
+dps". A slot with nobody to fill it is left as written, so `[@pi2,exists]`
+simply fails and the next clause is tried.
+
+Details worth knowing:
+
+- Tokens are account-wide. Names are letters only, 2 to 12 characters, and
+  can't be something the client already treats as a unit (`focus`, `party`…).
+- A Battle.net friend counts on any character they play. To keep one alt out:
+  `/rtk token pi except Bob target` while they're on it (or right-click →
+  **Never <alt> for @pi**). Friends are shown by BattleTag name, never the
+  number; two friends with the same name are told apart by the character each
+  is on or was last seen on.
+- Listing the same person as a character and as a friend is allowed and
+  useful: `Bobmage` at position 1 and friend `Bob` at position 3 means "Bob on
+  his mage is first; Bob on anything else is third".
+- Pins from older versions became tokens named `mytank`, `myhealer` and
+  `mydps`, with a role filter. Change `@tank` to
+  `[@mytank,exists,nodead] [@tank,exists,nodead]` where you relied on a pin.
+
+You are never chosen for a token. Always pair a token with `exists`; a bare
+`[@tank]` would try to cast at nobody instead of falling through.
 
 ## Commands
 
 ```
 /rtk                      status: resolved tokens and managed macros
+/rtk ui                   the token window
 /rtk refresh              re-scan and rewrite now
 /rtk forget <MacroName>   stop managing (current text stays)
-/rtk pin <token> <Name>   /rtk unpin <token>
+/rtk token <name> add | remove | move | role | except | allow | clear | delete
 /rtk quiet | verbose      chat notices
+/rtk debug                log each sync's duration to SavedVariables
 ```
 
 ## Who this is for
 
-- **Hunter** Misdirection, **Rogue** Tricks of the Trade → `@tank`.
+- **Hunter** Misdirection, **Rogue** Tricks of the Trade → `@tank`, or a
+  `@md` list of your regular tanks.
+- **Priests** Power Infusion → `@pi`, the people you actually want to buff.
+- **Druids** Innervate → `@innervate`, or `@healer`.
 - **Healers** with tank externals: Pain Suppression, Guardian Spirit, Ironbark,
   Life Cocoon, Blessing of Sacrifice → `@tank`, `@tank2`.
-- **Druids** Innervate, **Priests** Power Infusion on a healer → `@healer`.
 - **Warriors** Intervene, **Monks** Tiger's Lust on the tank → `@tank`.
-
-Anything that keys on a role rather than a person.
 
 ## Limits
 
-- Macro edits are blocked in combat by the client, so a tank change mid-fight
+- Macro edits are blocked in combat by the client, so a change mid-fight
   applies after combat.
 - Macro bodies cap at 255 characters after expansion (`raid12` is longer than
-  `tank`); the addon warns and leaves the macro alone if it would overflow.
+  `pi`); the addon warns and leaves the macro alone if it would overflow.
 - Roles come from the group role assignment. In a premade group with no role
-  check, players who never set a role won't resolve.
+  check, players who never set a role won't resolve for role tokens or role
+  filters.
+- The addon does nothing per frame. Work happens only when the roster, roles
+  or macros change, and one pass is bounded by group size × tokens × entries.

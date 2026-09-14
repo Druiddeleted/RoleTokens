@@ -40,13 +40,17 @@ function Macros.Sync(reason)
         pendingAfterCombat = true
         return
     end
-    local units = Resolve.Units(DB.DropSelf(), DB.Pins())
+    local t0 = DB.Debug() and debugprofilestop() or nil
+    local known = DB.KnownTokens()
+    local units = Resolve.Units(DB.DropSelf(), DB.Tokens())
     Macros.lastUnits = units
+    Macros.lastKnown = known
 
+    local edits = 0
     eachMacro(function(index, scope, name, icon, body)
         local entry = DB.Get(scope, name)
         local ours = entry and body == entry.lastBody
-        if Expand.HasToken(body) and not ours then
+        if Expand.HasToken(body, known) and not ours then
             if not entry or entry.template ~= body then
                 entry = { template = body }
                 DB.Set(scope, name, entry)
@@ -59,19 +63,24 @@ function Macros.Sync(reason)
         end
         if not entry then return end
 
-        local desired = Expand.Body(entry.template, units)
+        local desired = Expand.Body(entry.template, units, known)
         if #desired > 255 then
             say("|cffff4444%s|r would be %d characters after expansion (limit 255); left unchanged", name, #desired)
             return
         end
         if desired ~= body then
             EditMacro(index, name, icon, desired)
+            edits = edits + 1
             if reason then
                 say("updated |cffffff00%s|r (%s)", name, reason)
             end
         end
         entry.lastBody = desired
     end)
+    if t0 then
+        DB.Log(("sync %s: %.2f ms, %d macro edit(s)"):format(reason or "-", debugprofilestop() - t0, edits))
+    end
+    if NS.UI and NS.UI.OnSync then NS.UI.OnSync() end
 end
 
 function Macros.OnCombatEnd()

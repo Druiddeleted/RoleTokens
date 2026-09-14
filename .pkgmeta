@@ -12,4 +12,4 @@ ignore:
   - "*.psd"
   - "*.xcf"
 
-manual-changelog: RELEASE_NOTES.md
+manual-changelog: CHANGELOG.md

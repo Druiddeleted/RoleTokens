@@ -4,11 +4,14 @@
 ## Author: Druiddeleted
 ## Version: 0.1.0
 ## IconTexture: Interface\Icons\Ability_Hunter_Misdirection
-## SavedVariables: RoleTokensDB
+## SavedVariables: RoleTokensDB, RoleTokensLog
 
-src\db.lua
+src\names.lua
 src\expand.lua
+src\db.lua
 src\resolve.lua
 src\macros.lua
 src\commands.lua
+src\menu.lua
+src\ui.lua
 src\core.lua
