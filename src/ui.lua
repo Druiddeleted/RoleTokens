@@ -469,7 +469,46 @@ local function build()
     frame.newBtn:SetSize(LEFT_W - 20, 24)
     frame.newBtn:SetPoint("BOTTOM", -1, 6)
     frame.newBtn:SetText("+ New token")
-    frame.newBtn:SetScript("OnClick", function() StaticPopup_Show("ROLETOKENS_NEW_TOKEN") end)
+    frame.newBtn:SetScript("OnClick", function()
+        if frame.newBox:IsShown() then frame.newBox:Hide() else frame.newBox:Show(); frame.newBox.edit:SetText(""); frame.newBox.edit:SetFocus() end
+    end)
+
+    -- inline "new token" form: validates as you type, never closes on an error
+    local nb = CreateFrame("Frame", nil, frame.left)
+    nb:SetPoint("BOTTOMLEFT", frame.newBtn, "TOPLEFT", 0, 6)
+    nb:SetPoint("BOTTOMRIGHT", frame.newBtn, "TOPRIGHT", 0, 6)
+    nb:SetHeight(64)
+    nb:Hide()
+    nb.edit = CreateFrame("EditBox", nil, nb, "InputBoxTemplate")
+    nb.edit:SetPoint("TOPLEFT", 6, -4); nb.edit:SetPoint("TOPRIGHT", -62, -4); nb.edit:SetHeight(22)
+    nb.edit:SetAutoFocus(false); nb.edit:SetMaxLetters(12)
+    nb.create = CreateFrame("Button", nil, nb, "UIPanelButtonTemplate")
+    nb.create:SetSize(56, 22); nb.create:SetPoint("LEFT", nb.edit, "RIGHT", 4, 0); nb.create:SetText("Create")
+    nb.err = nb:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    nb.err:SetPoint("TOPLEFT", nb.edit, "BOTTOMLEFT", -4, -3); nb.err:SetPoint("RIGHT", nb, "RIGHT", -2, 0)
+    nb.err:SetJustifyH("LEFT"); nb.err:SetWordWrap(true)
+    local function validate()
+        local text = nb.edit:GetText() or ""
+        if text == "" then nb.err:SetText("|cff888888letters only, used as @name in macros|r"); nb.create:Disable(); return nil end
+        local name, why = Expand.ValidName(text)
+        if not name then nb.err:SetText("|cffff4444" .. why .. "|r"); nb.create:Disable(); return nil end
+        if DB.Token(name) then nb.err:SetText("|cffff4444@" .. name .. " already exists|r"); nb.create:Disable(); return nil end
+        nb.err:SetText("|cff33ff99@" .. name .. "|r"); nb.create:Enable()
+        return name
+    end
+    local function create()
+        local name = validate()
+        if not name then return end
+        DB.CreateToken(name); selected = name; scroll = 0
+        nb:Hide()
+        Macros.Sync("token changed")
+    end
+    nb.edit:SetScript("OnTextChanged", validate)
+    nb.edit:SetScript("OnEnterPressed", create)
+    nb.edit:SetScript("OnEscapePressed", function() nb:Hide() end)
+    nb.create:SetScript("OnClick", create)
+    nb:SetScript("OnShow", validate)
+    frame.newBox = nb
 
     -- right pane
     frame.right = CreateFrame("Frame", nil, frame)
@@ -514,22 +553,8 @@ local function build()
         frame.minimapCB:SetChecked(not DB.Minimap().hide)
         Macros.Sync(); UI.Refresh()
     end)
-    frame:SetScript("OnHide", function() if picker then picker:Hide() end end)
+    frame:SetScript("OnHide", function() if picker then picker:Hide() end; if frame.newBox then frame.newBox:Hide() end end)
 
-    StaticPopupDialogs["ROLETOKENS_NEW_TOKEN"] = {
-        text = "New token name (letters only, used as @name in macros):",
-        button1 = CREATE or "Create", button2 = CANCEL, hasEditBox = true, maxLetters = 12,
-        whileDead = true, hideOnEscape = true, timeout = 0,
-        OnAccept = function(self)
-            local eb = self.editBox or self.EditBox
-            local name, why = Expand.ValidName(eb and eb:GetText() or "")
-            if not name then Macros.Say("|cffff4444%s|r", why or "invalid name") return end
-            DB.CreateToken(name); selected = name; scroll = 0
-            Macros.Sync("token changed")
-        end,
-        EditBoxOnEnterPressed = function(self) StaticPopup_OnClick(self:GetParent(), 1) end,
-        EditBoxOnEscapePressed = function(self) self:GetParent():Hide() end,
-    }
     StaticPopupDialogs["ROLETOKENS_DELETE_TOKEN"] = {
         text = "Delete %s? Macros keep their text; it just stops being rewritten.",
         button1 = DELETE or "Delete", button2 = CANCEL, whileDead = true, hideOnEscape = true, timeout = 0,
