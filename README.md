@@ -45,7 +45,8 @@ second. Optionally the token only counts people while they play a given role.
 /rtk token pi add target           # whoever you're targeting
 /rtk token pi add Moonwell         # by name (Name-Realm for other realms)
 /rtk token pi add friend Bob       # a Battle.net friend, on whichever alt they bring
-/rtk token pi role dps             # skip them while they're healing or tanking
+/rtk token pi role dps             # skip anyone on the list while they're healing or tanking
+/rtk token pi role Bob tank        # but count Bob only while tanking (overrides the list filter)
 /rtk token pi                      # see the list and who resolves right now
 ```
 

@@ -4,7 +4,7 @@
 
 - Custom tokens: `/rtk token pi add target` creates `@pi`, resolved from an
   ordered list of people who are in your group, with `@pi2`, `@pi3` for the
-  next ones and an optional role filter. Entries are characters or Battle.net
+  next ones and an optional role filter, per list or per person. Entries are characters or Battle.net
   friends (any alt, with per-alt exclusions). Account-wide.
 - A RoleTokens page in Options → AddOns (`/rtk ui`, or the new minimap
   button) with a picker over your group, online friends and online guild

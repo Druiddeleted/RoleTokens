@@ -7,8 +7,9 @@ local DB = NS.DB
 --   RoleTokensDB.characters[charKey][macroName]    = same shape, for character macros
 --   RoleTokensDB.dropSelf                          = true  (never resolve a token to yourself)
 --   RoleTokensDB.tokens[name]                      = { role = "dps"|nil, entries = { entry, ... } }
---     entry = { kind = "char", name = "Name-Realm" }
---           | { kind = "bnet", tag = "Tag#1234", lastSeen = "Name-Realm"|nil, exclude = { [key] = true }|nil }
+--     entry = { kind = "char", name = "Name-Realm", role = "dps"|nil }
+--           | { kind = "bnet", tag = "Tag#1234", role = ..., lastSeen = "Name-Realm"|nil, exclude = { [key] = true }|nil }
+--     entry.role overrides the token's role filter for that person.
 --   RoleTokensDB.ui                                = window position
 --   RoleTokensDB.schema                            = 2
 -- RoleTokensLog is a separate SavedVariable: a capped list of debug lines.
@@ -181,6 +182,10 @@ function DB.MoveEntry(token, from, to)
     local e = table.remove(token.entries, from)
     table.insert(token.entries, to, e)
     return true
+end
+
+function DB.SetEntryRole(entry, role)     -- role: "tank"|"healer"|"dps"|nil (nil = token's filter)
+    entry.role = role
 end
 
 function DB.SetExclude(entry, charFull, on)

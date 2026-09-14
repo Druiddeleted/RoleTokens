@@ -30,7 +30,8 @@ Resolve.ROLE_OF = ROLE_OF
 --
 -- Built-in tokens: raid main tank first (tank only), then everyone assigned
 -- that role by group index. Custom tokens: entries in list order, present in
--- the group, matching the role filter if one is set, each person once.
+-- the group, matching the role filter if one is set (an entry's own role
+-- overrides the token's), each person once.
 --   tokens: DB.Tokens()  { pi = { role = "dps"|nil, entries = {...} }, ... }
 function Resolve.Units(dropSelf, tokens, wantDetail)
     local byRole, all = { tank = {}, healer = {}, dps = {} }, {}
@@ -103,7 +104,7 @@ function Resolve.Units(dropSelf, tokens, wantDetail)
                 local f = fullName(unit)
                 if entry.kind == "bnet" and entry.exclude and f and entry.exclude[Names.Key(f)] then
                     status = "excluded"
-                elseif token.role and roleOf[unit] ~= token.role then
+                elseif (entry.role or token.role) and roleOf[unit] ~= (entry.role or token.role) then
                     status = (roleOf[unit] and (roleOf[unit] == "dps" and "dps" or roleOf[unit] == "tank" and "tanking" or "healing") or "no role") .. " · skipped"
                 elseif taken[unit] then
                     status = "already listed"

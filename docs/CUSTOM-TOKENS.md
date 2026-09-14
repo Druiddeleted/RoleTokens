@@ -48,7 +48,7 @@ are migrated into a token (see migration).
 |------------|----------------------------|----------------------------------------------------------------------------------------|
 | `name`     | string, key                | What you write after `@`. See naming rules.                                            |
 | `entries`  | ordered list of entries    | People, highest priority first. May be empty.                                          |
-| `role`     | `tank`/`healer`/`dps`/nil  | If set, an entry only counts while that player is assigned this role.                  |
+| `role`     | `tank`/`healer`/`dps`/nil  | If set, an entry only counts while that player is assigned this role. An entry may carry its own `role`, which overrides the token's for that person ("A only as dps, B only as tank"). |
 | `builtin`  | true for tank/healer/dps   | No entries, fixed role. Can't be edited, deleted or re-created.                        |
 
 An **entry** is one of:

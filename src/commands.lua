@@ -71,7 +71,8 @@ local function help()
     out("  /rtk token <name> add friend <name|target>   - a Battle.net friend, on any character")
     out("  /rtk token <name> remove <position|name>")
     out("  /rtk token <name> move <from> <to>")
-    out("  /rtk token <name> role tank|healer|dps|none")
+    out("  /rtk token <name> role tank|healer|dps|any              - filter for the whole list")
+    out("  /rtk token <name> role <position|name> tank|healer|dps|any - filter for one person")
     out("  /rtk token <name> except <friend> <target|Name-Realm>  - never that character")
     out("  /rtk token <name> allow <friend> <Name-Realm>          - undo an except")
     out("  /rtk token <name> clear | delete")
@@ -92,6 +93,7 @@ local function showToken(name)
         local e = r.entry
         local label = Names.Label(e)
         if e.kind == "bnet" then label = label .. GREY(" (friend)") end
+        if e.role then label = label .. GREY(" [" .. e.role .. "]") end
         local slot = r.slot and Y(("  @%s%s"):format(name, r.slot == 1 and "" or r.slot)) or ""
         out("  %d. %-24s %s%s", i, label, GREY(r.status), slot)
         if e.kind == "bnet" and e.exclude then
@@ -214,11 +216,24 @@ local function tokenCmd(rest)
         if not (from and to and DB.MoveEntry(token, from, to)) then out("usage: /rtk token %s move <from> <to>", name) return end
         out("moved %s to position %d in %s", Names.Label(token.entries[to]), to, Y("@" .. name))
     elseif sub == "role" then
-        local r = (words[1] or ""):lower()
-        if r == "none" or r == "any" then DB.SetRole(name, nil)
-        elseif Expand.IsRole(r) then DB.SetRole(name, r)
-        else out("role must be tank, healer, dps or none") return end
-        out("%s role filter: %s", Y("@" .. name), token.role or "none")
+        local function parseRole(w)
+            w = (w or ""):lower()
+            if w == "none" or w == "any" then return nil, true end
+            if Expand.IsRole(w) then return w, true end
+            return nil, false
+        end
+        if words[2] then                       -- role <position|name> <role|any>: one person
+            local i = findEntry(token, words[1])
+            local r, ok = parseRole(words[2])
+            if not i or not ok then out("usage: /rtk token %s role <position|name> tank|healer|dps|any", name) return end
+            DB.SetEntryRole(token.entries[i], r)
+            out("%s counts on %s only while %s", Names.Label(token.entries[i]), Y("@" .. name), r and ("playing " .. r) or "any role (the token's filter applies)")
+        else                                   -- role <role|any>: the whole token
+            local r, ok = parseRole(words[1])
+            if not ok then out("role must be tank, healer, dps or any") return end
+            DB.SetRole(name, r)
+            out("%s role filter: %s", Y("@" .. name), token.role or "any")
+        end
     elseif sub == "except" or sub == "allow" then
         local i = words[1] and findEntry(token, words[1])
         local e = i and token.entries[i]

@@ -108,9 +108,25 @@ local function getRow(i)
     r.down:SetPoint("RIGHT", r.del, "LEFT", -4, -2)
     r.up = makeIconButton(r, "Interface\\Buttons\\Arrow-Up-Up", 16, function() r.onMove(-1) end)
     r.up:SetPoint("RIGHT", r.down, "LEFT", -4, 4)
+    r.role = CreateFrame("Button", nil, r)
+    r.role:SetSize(52, 18)
+    r.role:SetPoint("RIGHT", r.up, "LEFT", -6, -4)
+    r.role.text = r.role:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    r.role.text:SetPoint("CENTER")
+    r.role:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+    r.role:SetScript("OnClick", function(self)
+        MenuUtil.CreateContextMenu(self, function(owner, root)
+            root:CreateTitle("Count " .. Names.Label(r.line.entry) .. " only while playing")
+            local e = r.line.entry
+            local function isSel(v) return e.role == v end
+            local function set(v) DB.SetEntryRole(e, v); Macros.Sync("token changed") end
+            root:CreateRadio("the token's filter", isSel, set, nil)
+            for _, ro in ipairs(Expand.ROLES) do root:CreateRadio(ro, isSel, set, ro) end
+        end)
+    end)
     r:EnableMouse(true)
-    r:SetScript("OnEnter", function() r.bg:SetColorTexture(1, 1, 1, 0.06); r.up:SetAlpha(1); r.down:SetAlpha(1); r.del:SetAlpha(1) end)
-    r:SetScript("OnLeave", function() r.bg:SetColorTexture(r.present and 0.12 or 0.09, r.present and 0.17 or 0.09, r.present and 0.12 or 0.09, 1); r.up:SetAlpha(0.35); r.down:SetAlpha(0.35); r.del:SetAlpha(0.35) end)
+    r:SetScript("OnEnter", function() r.bg:SetColorTexture(1, 1, 1, 0.06); r.up:SetAlpha(1); r.down:SetAlpha(1); r.del:SetAlpha(1); r.role:SetAlpha(1) end)
+    r:SetScript("OnLeave", function() r.bg:SetColorTexture(r.present and 0.12 or 0.09, r.present and 0.17 or 0.09, r.present and 0.12 or 0.09, 1); r.up:SetAlpha(0.35); r.down:SetAlpha(0.35); r.del:SetAlpha(0.35); r.role:SetAlpha(r.line and r.line.entry and r.line.entry.role and 1 or 0.35) end)
     rowPool[i] = r
     return r
 end
@@ -135,6 +151,7 @@ local function paintRows()
             r:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -y)
             r:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -y)
             r.present = line.present
+            r.line = line
             r.num:SetText(line.index and line.kind == "entry" and tostring(line.index) or "")
             r.dot:SetShown(line.kind == "entry")
             r.dot:SetTexture(line.present and "Interface\\COMMON\\Indicator-Green" or "Interface\\COMMON\\Indicator-Gray")
@@ -146,6 +163,8 @@ local function paintRows()
             r.slot:SetShown(line.slot ~= nil)
             local editable = line.kind == "entry"
             r.up:SetShown(editable); r.down:SetShown(editable)
+            r.role:SetShown(editable)
+            if editable then r.role.text:SetText(line.entry.role and ("|cffffd100" .. line.entry.role .. "|r") or "any") end
             r.del:SetShown(editable or line.kind == "except")
             if line.slot then r.del:ClearAllPoints(); r.del:SetPoint("RIGHT", r.slot, "LEFT", -10, 0)
             else r.del:ClearAllPoints(); r.del:SetPoint("RIGHT", -8, 0) end

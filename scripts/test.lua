@@ -155,6 +155,12 @@ eq(u.pi1, "party1", "dup entry once"); eq(u.pi2, nil, "dup entry not twice")
 u = R.Units(true, { pi = tok(nil, ch("Nobody"), ch("Carol")) })
 eq(u.pi1, "party3", "absent entry skipped, next takes slot 1")
 
+-- per-entry role overrides the token's: Alice only as dps, Bob only as tank
+u = R.Units(true, { pi = tok(nil, { kind = "char", name = "Alice", role = "dps" }, { kind = "char", name = "Bob", role = "tank" }, { kind = "char", name = "Dave", role = "tank" }) })
+eq(u.pi1, "party1", "entry role dps matches Alice"); eq(u.pi2, "party4", "Bob healing skipped, Dave tanking counts")
+u = R.Units(true, { pi = tok("dps", { kind = "char", name = "Dave", role = "tank" }, ch("Bob")) })
+eq(u.pi1, "party4", "entry role overrides token filter"); eq(u.pi2, nil, "token filter still applies to others")
+
 -- friend entries: Bob is SuperNinja#1 on Bob-Tichondrius
 party({ {"DAMAGER","Alice"}, {"HEALER","Bob"}, {"DAMAGER","Carol"} }, { { tag = "SuperNinja#1", char = "Bob-Tichondrius" } })
 local t = tok(nil, bn("superninja#1"))
