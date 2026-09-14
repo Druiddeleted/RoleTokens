@@ -76,16 +76,19 @@ same display name. The BattleTag prefix is plain text, so:
 - Each Battle.net entry keeps `lastSeen`, the `Name-Realm` the friend was
   last seen on a WoW client: set when added, refreshed on every friends list
   update and whenever they're in the group.
-- If two entries on the same token share a prefix (case-insensitive), those
-  entries, and only those, get a suffix: the character they're on now if
-  online, else `lastSeen`, e.g. `Bob (Bobpriest-Area52)`. If neither exists
-  (added from the friends list while they were only on the mobile app) the
-  suffix is `(no character seen)` until they log in once, and the tag is in
-  that row's tooltip as a last resort.
+- A friend's row always shows a character in its status column: `on
+  Bobmage-Area52` while grouped, else `last seen Bobbyrogue-Illidan`. That
+  is what tells two friends with the same prefix apart; labels never carry
+  a suffix. A friend never seen on a WoW client (added from the friends list
+  while on the mobile app) shows `no character seen` until they log in once,
+  and the tag is in that row's tooltip as a last resort.
 - The Kstring display name is shown in the row tooltip, where rendering is
   all that's needed.
 - The picker shows the current character on every friend row, so two Bobs
-  are told apart before you click.
+  are told apart before you click. Group and Guild rows add a character;
+  Friends rows add the friend on any character. A grouped friend therefore
+  appears in both sections, and the "on list" mark shows which form is
+  already there.
 - `add friend <text>` with several prefix matches lists them with the
   character each is on now (or `lastSeen`) and accepts a position from that
   list. The menu and the picker never hit this case.
@@ -218,7 +221,8 @@ the quickest way to check "who is @pi right now."
 
 ## 6. UI
 
-Three pieces, listed in the order they'd ship.
+Mock: https://claude.ai/artifact/Bfrhnt1Cx9FHw9CNPWp72N (token window,
+add picker, right-click menu). Three pieces, listed in the order they'd ship.
 
 ### 6.1 Unit menu entry
 
@@ -227,12 +231,11 @@ frames, target, focus, the friends list, the guild roster) gets a **RoleTokens**
 submenu:
 
 ```
-RoleTokens ▸  Add to @pi
-              Add to @pi as friend   (only when the player is a Battle.net friend)
-              Add to @md
-              ─────────
-              Remove from @pi      (only shown where they're already listed)
-              Exclude this character from @pi   (only when they matched through a Battle.net entry)
+RoleTokens
+  Add Oní to ▸                @pi (on list, greyed) · @md · @innervate
+  Add friend SuperNinja to ▸  same list; only when the player is a Battle.net friend
+  Remove from @pi             only shown where they're already listed
+  Exclude this character from @pi   only when they matched through a Battle.net entry
 ```
 
 This uses the retail menu system's `Menu.ModifyMenu` on the party, raid,
@@ -267,10 +270,11 @@ One movable, resizable frame, built once and repainted on change.
   naming rules enforced live.
 - Right side header: the role dropdown.
 - Rows: position, presence dot (filled: present and passes the filter; hollow:
-  present but wrong role, excluded, or absent, with the reason in grey), the
-  entry as stored, and for Battle.net entries the character they're currently
-  on. A Battle.net entry with exclusions shows them as a grey sub-line, each
-  with an x. Arrows and remove appear on hover. Drag-to-reorder is not planned; the
+  present but wrong role, excluded, or absent), the label, a status column
+  (`on Oní-Dragonmaw`, `healing · skipped`, `last seen Bobbyrogue-Illidan`,
+  `not in group`), and on resolved rows the slot they fill (`@pi`, `@pi2`).
+  A Battle.net entry with exclusions shows them as an indented `except`
+  sub-line, each with an x. Arrows and remove appear on hover. Drag-to-reorder is not planned; the
   arrows are enough for lists of a handful of names.
 - "+ Add" opens a picker: a search box, then sections **Group**, **Friends
   online**, **Guild online**, each row a click to add. Battle.net friends
