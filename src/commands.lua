@@ -62,7 +62,6 @@ local function help()
     out("  /rtk                     - show resolved tokens and managed macros")
     out("  /rtk ui                  - open the RoleTokens page in Options > AddOns")
     out("  /rtk minimap             - show or hide the minimap button")
-    out("  /rtk self                - toggle whether you can be picked yourself (off by default)")
     out("  /rtk refresh             - re-scan macros and rewrite now")
     out("  /rtk forget <MacroName>  - stop managing a macro (its current text stays)")
     out("  /rtk token               - list your tokens")
@@ -278,10 +277,6 @@ SlashCmdList.ROLETOKENS = function(msg)
         tokenCmd(rest)
     elseif cmd == "pin" or cmd == "unpin" then
         out("pins are now tokens: /rtk token mytank add <Name>, /rtk token mytank role tank, then [@mytank,exists,nodead] [@tank,exists,nodead]")
-    elseif cmd == "self" then
-        DB.SetDropSelf(not DB.DropSelf())
-        out("you are %s a candidate for tokens", DB.DropSelf() and "never" or "now")
-        Macros.Sync("self changed")
     elseif cmd == "minimap" then
         if NS.Minimap then NS.Minimap.SetShown(DB.Minimap().hide == true) end
     elseif cmd == "quiet" then
