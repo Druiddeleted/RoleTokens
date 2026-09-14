@@ -508,7 +508,6 @@ local function build()
 
     if Settings and Settings.RegisterCanvasLayoutCategory then
         category = Settings.RegisterCanvasLayoutCategory(frame, "RoleTokens")
-        category.ID = "RoleTokens"
         Settings.RegisterAddOnCategory(category)
     end
 end
@@ -522,6 +521,6 @@ end
 function UI.Toggle()
     if not frame then build() end
     if category and Settings.OpenToCategory then
-        Settings.OpenToCategory(category.ID)
+        Settings.OpenToCategory(category:GetID())
     end
 end
