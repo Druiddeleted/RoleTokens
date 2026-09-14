@@ -139,6 +139,7 @@ local function paintRows()
             r.dot:SetShown(line.kind == "entry")
             r.dot:SetTexture(line.present and "Interface\\COMMON\\Indicator-Green" or "Interface\\COMMON\\Indicator-Gray")
             r.label:SetText(line.label or "")
+            r.label:SetWidth(line.kind == "empty" and 500 or 150)
             r.label:SetFontObject(line.kind == "except" and "GameFontDisableSmall" or line.kind == "builtin" and "GameFontNormal" or "GameFontHighlight")
             r.status:SetText(line.status or "")
             r.slot:SetText(line.slot or "")
@@ -224,7 +225,7 @@ local function paintHeader()
         for slot = 1, 4 do
             local u = units[Expand.Key(selected, slot)]
             local key = ("@%s%s"):format(selected, slot == 1 and "" or slot)
-            parts[#parts + 1] = ("|cffffd100%s|r %s"):format(key, u and ("→ " .. u) or (GREY .. "→ none|r"))
+            parts[#parts + 1] = ("|cffffd100%s|r %s"):format(key, u and ("= " .. u) or (GREY .. "= none|r"))
             if not u then break end
         end
     end
@@ -413,8 +414,10 @@ local function build()
     local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 12, -10); title:SetText("RoleTokens")
     local sub = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
-    sub:SetPoint("LEFT", title, "RIGHT", 10, -1)
-    sub:SetText(GREY .. "@tank / @healer / @dps by role; your tokens by priority list. Fallbacks go in the macro: [@pi,exists,nodead] [@dps,exists,nodead]|r")
+    sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -2)
+    sub:SetPoint("RIGHT", frame, "RIGHT", -170, 0)
+    sub:SetJustifyH("LEFT"); sub:SetWordWrap(false)
+    sub:SetText(GREY .. "Built-in tokens go by role. Your tokens go by your list. Fallbacks belong in the macro: [@pi,exists,nodead] [@dps,exists,nodead]|r")
 
     frame.minimapCB = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
     frame.minimapCB:SetSize(24, 24)
@@ -426,7 +429,7 @@ local function build()
 
     -- left pane
     frame.left = CreateFrame("Frame", nil, frame)
-    frame.left:SetPoint("TOPLEFT", 8, -40)
+    frame.left:SetPoint("TOPLEFT", 8, -52)
     frame.left:SetPoint("BOTTOMLEFT", 8, 8)
     frame.left:SetWidth(LEFT_W)
     local sep = frame.left:CreateTexture(nil, "ARTWORK"); sep:SetWidth(1); sep:SetColorTexture(1, 1, 1, 0.1)
