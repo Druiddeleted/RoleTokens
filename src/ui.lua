@@ -9,7 +9,7 @@ local DB, Expand, Resolve, Macros, Names = NS.DB, NS.Expand, NS.Resolve, NS.Macr
 
 local W, H = 640, 480
 local LEFT_W = 150
-local ROW_H, SUB_H = 26, 20
+local ROW_H, SUB_H, LINE_H = 40, 20, 24
 local GOLD = { 0.9, 0.7, 0.13 }
 local GREY = "|cff888888"
 
@@ -97,9 +97,9 @@ local function getRow(i)
     r.dot = r:CreateTexture(nil, "ARTWORK")
     r.dot:SetSize(12, 12); r.dot:SetPoint("LEFT", 28, 0)
     r.label = r:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(150); r.label:SetJustifyH("LEFT"); r.label:SetWordWrap(false)
+    r.label:SetJustifyH("LEFT"); r.label:SetWordWrap(false)
     r.status = r:CreateFontString(nil, "OVERLAY", "GameFontDisable")
-    r.status:SetPoint("LEFT", 200, 0); r.status:SetJustifyH("LEFT"); r.status:SetWordWrap(false)
+    r.status:SetJustifyH("LEFT"); r.status:SetWordWrap(false)
     -- fixed columns from the right edge, so a hidden control leaves its gap
     r.slot = r:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     r.slot:SetPoint("RIGHT", -8, 0); r.slot:SetWidth(56); r.slot:SetJustifyH("RIGHT")
@@ -144,7 +144,7 @@ local function paintRows()
     for li, line in ipairs(lines) do
         if skip > 0 then skip = skip - 1
         else
-            local h = line.kind == "except" and SUB_H or ROW_H
+            local h = line.kind == "except" and SUB_H or line.kind == "entry" and ROW_H or LINE_H
             if y + h > avail then break end
             ri = ri + 1
             local r = getRow(ri)
@@ -158,7 +158,6 @@ local function paintRows()
             r.dot:SetShown(line.kind == "entry")
             r.dot:SetTexture(line.present and "Interface\\COMMON\\Indicator-Green" or "Interface\\COMMON\\Indicator-Gray")
             r.label:SetText(line.label or "")
-            r.label:SetWidth(line.kind == "empty" and 500 or 150)
             r.label:SetFontObject(line.kind == "except" and "GameFontDisableSmall" or line.kind == "builtin" and "GameFontNormal" or "GameFontHighlight")
             r.status:SetText(line.status or "")
             r.slot:SetText(line.slot or "")
@@ -169,15 +168,21 @@ local function paintRows()
             r.up:SetShown(editable and line.index > 1)
             r.down:SetShown(editable and line.index < count)
             r.role:SetShown(editable)
-            r.status:ClearAllPoints()
-            r.status:SetPoint("LEFT", line.kind == "except" and 100 or 200, 0)
+            r.label:ClearAllPoints(); r.status:ClearAllPoints()
             if editable then
+                -- two lines: name on top, status underneath, both up to the controls
                 r.role.text:SetText(line.entry.role and ("|cffffd100" .. line.entry.role .. "|r") or "any")
-                r.status:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
+                r.label:SetPoint("TOPLEFT", 46, -5); r.label:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
+                r.status:SetPoint("TOPLEFT", 46, -22); r.status:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
+                r.status:SetFontObject("GameFontDisableSmall")
             elseif line.kind == "except" then
-                r.status:SetPoint("RIGHT", r.del, "LEFT", -6, 0)
+                r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(50)
+                r.status:SetPoint("LEFT", 100, 0); r.status:SetPoint("RIGHT", r.del, "LEFT", -6, 0)
+                r.status:SetFontObject("GameFontDisableSmall")
             else
-                r.status:SetPoint("RIGHT", -8, 0)
+                r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(line.kind == "empty" and 500 or 110)
+                r.status:SetPoint("LEFT", 160, 0); r.status:SetPoint("RIGHT", -8, 0)
+                r.status:SetFontObject("GameFontHighlight")
             end
             r.del:SetShown(editable or line.kind == "except")
             if line.slot then r.del:ClearAllPoints(); r.del:SetPoint("RIGHT", r.slot, "LEFT", -10, 0)
