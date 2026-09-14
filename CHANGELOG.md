@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1
+
+- The options page can now add a friend exclusion: a "never this alt" control
+  on each friend row excludes the character they're on or were last seen on.
+- Right-clicking a friends-list row now offers "Never <character> for @token"
+  and "Add <character> to", using the character from the friend's account.
+
 ## 0.2.0
 
 - Custom tokens: `/rtk token pi add target` creates `@pi`, resolved from an
