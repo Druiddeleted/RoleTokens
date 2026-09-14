@@ -23,66 +23,77 @@ your bar is always a plain, ordinary macro. Your focus is never touched.
 
 If someone changes during a fight, the macro updates the moment combat ends.
 
-## Getting started
+## Quick and easy: the role tokens
 
-1. Put a token in any macro and save it. RoleTokens notices, says
-   `now managing macro <name>`, and fills in the real unit right away.
-2. That's it. Edit the macro any time; as long as a token is in it, it stays
-   managed. Save it without a token and RoleTokens leaves it alone from then on.
-
-Always pair a token with `exists`, like `[@tank,exists,nodead]`. When there is
-no tank, the token is left as written, `@tank` isn't a real unit, and the
-clause fails so the macro moves on to the next one. That's the whole fallback
-mechanism, and it's why a bare `[@tank]` would be a mistake: it would try to
-cast at nobody instead of moving on.
-
-## The role tokens
-
-These come built in and need no setup.
-
-| Write this            | You get                                                |
-|-----------------------|--------------------------------------------------------|
-| `@tank`               | the raid's assigned main tank, otherwise the first tank |
-| `@tank2`, `@tank3`…   | the other tanks                                        |
-| `@healer`, `@healer2`… | healers, in group order                               |
-| `@dps`, `@dps2`…      | damage dealers, in group order                         |
-
-Roles come from the group role assignment. Someone who never picks a role
-won't show up under any of these.
-
-## Your own tokens
-
-This is the part built for the people you actually play with.
-
-A token of your own is a name plus a ranked list of people. `@pi` is the
-highest-ranked person on your list who is in your group. `@pi2` is the next
-one, and so on. Everyone else is ignored.
-
-Build one from the RoleTokens page (Options, AddOns, RoleTokens, or click the
-minimap button), by right-clicking someone and choosing **Add … to @pi**, or
-from chat:
+Nothing to set up. Write `@tank`, `@healer` or `@dps` in a macro, save it, and
+it works.
 
 ```
-/rtk token pi add target          whoever you have targeted
-/rtk token pi add friend Bob      a Battle.net friend, whatever character they're on
-/rtk token pi add Moonwell        by name; use Name-Realm for other realms
-/rtk token pi                     show the list and who @pi is right now
+/cast [@tank,exists,nodead] Misdirection        hunters
+/cast [@tank,exists,nodead] Tricks of the Trade rogues
+/cast [@healer,exists,nodead] Innervate         druids
+/cast [@tank,exists,nodead] Pain Suppression    healers with a tank external
 ```
 
-The first `add` creates the token. Names are letters only, up to twelve of
-them, and you can't reuse a name the game already knows like `focus` or
-`party`.
+The moment you save, RoleTokens says `now managing macro <name>` and swaps the
+token for the real unit. From then on the macro follows your group.
 
-**Only when they're playing the right role.** Say the list is for Power
-Infusion and one of your friends sometimes heals. Tell the token to skip
-anyone who isn't dps right now:
+`@tank` is the raid's assigned main tank if there is one, otherwise the first
+tank. `@tank2`, `@healer2`, `@dps3` and so on count through the rest in group
+order. You are never picked yourself: a tank who writes `@tank` gets the other
+tank, which is what you want for Tricks or an external.
+
+One rule to keep: always pair a token with `exists`. When there is no tank,
+the token is left as written, `@tank` isn't a real unit, and the clause fails
+so the macro moves on to the next one. That's the entire fallback system, and
+it's why a bare `[@tank]` would try to cast at nobody instead of moving on.
+
+## If you want to choose who gets it: your own tokens
+
+Say you're a priest with two friends who should always get Power Infusion
+before anyone else. Make a token called `pi` and put them on it:
+
+```
+/rtk token pi add friend Alice
+/rtk token pi add friend Bob
+/rtk token pi add Carol-Illidan
+```
+
+Now `@pi` is Alice if she's in the group, otherwise Bob, otherwise Carol.
+`@pi2` is the next one down, `@pi3` the one after that. People who aren't
+here are simply skipped.
+
+Then write the macro so it walks the list and skips the dead:
+
+```
+#showtooltip
+/cast [@pi,exists,nodead] [@pi2,exists,nodead] [@pi3,exists,nodead] [@dps,exists,nodead] [] Power Infusion
+```
+
+Read it as: my first choice, or my second if the first is dead, or my third,
+or any dps if none of my people made it, or whatever I'm targeting. The game
+checks `nodead` at the instant you press the key, so this stays correct
+mid-fight even though RoleTokens itself only edits macros out of combat.
+
+You can also do all of this from the RoleTokens page (Options, AddOns,
+RoleTokens, or the minimap button), or by right-clicking a player, a friends
+list row or a guild roster row and choosing **Add … to @pi**.
+
+## The details
+
+**Naming.** The first `add` creates the token. Names are letters only, up to
+twelve, and can't be something the game already treats as a unit like `focus`
+or `party`.
+
+**Only while they're playing the right role.** If Bob sometimes heals, tell
+the token to skip anyone who isn't dps right now:
 
 ```
 /rtk token pi role dps
 ```
 
-Or set it per person, which overrides the list setting for them. "Count Alice
-only as dps, and Bob only as tank" is:
+Or set it per person, which overrides the list setting for them. "Alice only
+as dps, Bob only as tank" is:
 
 ```
 /rtk token pi role Alice dps
@@ -91,17 +102,13 @@ only as dps, and Bob only as tank" is:
 
 On the page, that's the small role button on each row.
 
-**Fallbacks go in the macro, not the token.** RoleTokens decides who is who.
-The game decides who is alive, and it decides that at the instant you press the
-key. So write the chain in the macro and let each step carry its own
-conditions:
+**Seeing what's going on.** `/rtk token pi` lists everyone on the token with
+a reason next to each name: who they're on, `not in group`,
+`healing · skipped`, and which slot they fill. `/rtk` on its own shows every
+token at once.
 
-```
-/cast [@pi,exists,nodead] [@pi2,exists,nodead] [@dps,exists,nodead] [] Power Infusion
-```
-
-Read it as: my first choice, or my second choice if the first one is dead, or
-any dps if none of my people are here, or my own target.
+**Editing.** `remove 2` or `remove Bob`, `move 3 1`, `clear`, `delete`. The
+page has arrows and an x on each row.
 
 ## Friends and their alts
 
