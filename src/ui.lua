@@ -7,8 +7,8 @@ local DB, Expand, Resolve, Macros, Names = NS.DB, NS.Expand, NS.Resolve, NS.Macr
 -- Costs nothing while hidden: no frames until first open, no events while
 -- closed. Picker data (friends, guild) is only walked while the picker is open.
 
-local W, H = 720, 400
-local LEFT_W = 170
+local W, H = 640, 480
+local LEFT_W = 150
 local ROW_H, SUB_H = 26, 20
 local GOLD = { 0.9, 0.7, 0.13 }
 local GREY = "|cff888888"
@@ -97,9 +97,9 @@ local function getRow(i)
     r.dot = r:CreateTexture(nil, "ARTWORK")
     r.dot:SetSize(12, 12); r.dot:SetPoint("LEFT", 28, 0)
     r.label = r:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-    r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(190); r.label:SetJustifyH("LEFT")
+    r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(150); r.label:SetJustifyH("LEFT")
     r.status = r:CreateFontString(nil, "OVERLAY", "GameFontDisable")
-    r.status:SetPoint("LEFT", 240, 0); r.status:SetPoint("RIGHT", -120, 0); r.status:SetJustifyH("LEFT")
+    r.status:SetPoint("LEFT", 200, 0); r.status:SetPoint("RIGHT", -110, 0); r.status:SetJustifyH("LEFT")
     r.slot = r:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     r.slot:SetPoint("RIGHT", -8, 0)
     r.del = makeIconButton(r, "Interface\\RaidFrame\\ReadyCheck-NotReady", 16, function() r.onDelete() end)
@@ -152,7 +152,7 @@ local function paintRows()
                 r.label:ClearAllPoints(); r.label:SetPoint("LEFT", 46, 0)
                 r.status:SetPoint("LEFT", 100, 0)
             else
-                r.status:SetPoint("LEFT", 240, 0)
+                r.status:SetPoint("LEFT", 200, 0)
             end
             r.onMove = function(dir)
                 local token = DB.Token(selected)
@@ -364,6 +364,7 @@ local function buildPicker()
     picker:SetSize(300, 300)
     picker:SetPoint("TOPLEFT", frame.addBtn, "BOTTOMLEFT", 0, -4)
     picker:SetFrameStrata("DIALOG")
+    picker:SetFrameLevel(frame:GetFrameLevel() + 20)
     picker:SetBackdrop({ bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background-Dark", edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border", edgeSize = 12, insets = { left = 3, right = 3, top = 3, bottom = 3 } })
     picker:EnableMouse(true)
     picker.title = picker:CreateFontString(nil, "OVERLAY", "GameFontNormal")
@@ -401,27 +402,31 @@ local function buildPicker()
     picker.events:SetScript("OnEvent", function() UI.RefreshPicker() end)
 end
 
--- ---- window ----------------------------------------------------------------
+-- ---- panel (Options -> AddOns -> RoleTokens) ------------------------------
+local category
+
 local function build()
-    frame = CreateFrame("Frame", "RoleTokensFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(W, H)
-    frame:SetMovable(true); frame:EnableMouse(true); frame:SetClampedToScreen(true)
-    frame:RegisterForDrag("LeftButton")
-    frame:SetScript("OnDragStart", frame.StartMoving)
-    frame:SetScript("OnDragStop", function()
-        frame:StopMovingOrSizing()
-        local point, _, rel, x, y = frame:GetPoint()
-        local ui = DB.UI(); ui.point, ui.rel, ui.x, ui.y = point, rel, x, y
-    end)
-    local ui = DB.UI()
-    if ui.point then frame:SetPoint(ui.point, UIParent, ui.rel or ui.point, ui.x or 0, ui.y or 0)
-    else frame:SetPoint("CENTER") end
-    frame.TitleText:SetText("RoleTokens")
-    tinsert(UISpecialFrames, "RoleTokensFrame")
+    frame = CreateFrame("Frame", "RoleTokensPanel")
+    frame:SetSize(W, H)   -- the settings canvas resizes it; this is the design size
+    frame:Hide()
+
+    local title = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    title:SetPoint("TOPLEFT", 12, -10); title:SetText("RoleTokens")
+    local sub = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    sub:SetPoint("LEFT", title, "RIGHT", 10, -1)
+    sub:SetText(GREY .. "@tank / @healer / @dps by role; your tokens by priority list. Fallbacks go in the macro: [@pi,exists,nodead] [@dps,exists,nodead]|r")
+
+    frame.minimapCB = CreateFrame("CheckButton", nil, frame, "UICheckButtonTemplate")
+    frame.minimapCB:SetSize(24, 24)
+    frame.minimapCB:SetPoint("TOPRIGHT", -8, -6)
+    frame.minimapCB.text = frame.minimapCB:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
+    frame.minimapCB.text:SetPoint("RIGHT", frame.minimapCB, "LEFT", -2, 0)
+    frame.minimapCB.text:SetText("Minimap button")
+    frame.minimapCB:SetScript("OnClick", function(self) if NS.Minimap then NS.Minimap.SetShown(self:GetChecked()) end end)
 
     -- left pane
     frame.left = CreateFrame("Frame", nil, frame)
-    frame.left:SetPoint("TOPLEFT", 8, -28)
+    frame.left:SetPoint("TOPLEFT", 8, -40)
     frame.left:SetPoint("BOTTOMLEFT", 8, 8)
     frame.left:SetWidth(LEFT_W)
     local sep = frame.left:CreateTexture(nil, "ARTWORK"); sep:SetWidth(1); sep:SetColorTexture(1, 1, 1, 0.1)
@@ -475,7 +480,10 @@ local function build()
     frame.resolves:SetPoint("BOTTOMRIGHT", 0, 9); frame.resolves:SetPoint("LEFT", frame.addBtn, "RIGHT", 10, 0)
     frame.resolves:SetJustifyH("RIGHT")
 
-    frame:SetScript("OnShow", function() Macros.Sync(); UI.Refresh() end)
+    frame:SetScript("OnShow", function()
+        frame.minimapCB:SetChecked(not DB.Minimap().hide)
+        Macros.Sync(); UI.Refresh()
+    end)
     frame:SetScript("OnHide", function() if picker then picker:Hide() end end)
 
     StaticPopupDialogs["ROLETOKENS_NEW_TOKEN"] = {
@@ -497,9 +505,23 @@ local function build()
         button1 = DELETE or "Delete", button2 = CANCEL, whileDead = true, hideOnEscape = true, timeout = 0,
         OnAccept = function(self, name) DB.DeleteToken(name); selected = nil; Macros.Sync("token changed") end,
     }
+
+    if Settings and Settings.RegisterCanvasLayoutCategory then
+        category = Settings.RegisterCanvasLayoutCategory(frame, "RoleTokens")
+        category.ID = "RoleTokens"
+        Settings.RegisterAddOnCategory(category)
+    end
+end
+
+-- Called once at PLAYER_LOGIN so the category exists in Options -> AddOns
+-- before anyone opens the panel. Cheap: frames only, no data work until shown.
+function UI.Init()
+    if not frame then build() end
 end
 
 function UI.Toggle()
     if not frame then build() end
-    if frame:IsShown() then frame:Hide() else frame:Show() end
+    if category and Settings.OpenToCategory then
+        Settings.OpenToCategory(category.ID)
+    end
 end

@@ -244,9 +244,13 @@ context data carries the name and server, and for Battle.net friends the
 account, so the entry is created in the right form without typing. This is
 the main input path; the window is for reordering and review.
 
-### 6.2 Token window (`/rtk ui`)
+### 6.2 Token page (Options → AddOns → RoleTokens)
 
-One movable, resizable frame, built once and repainted on change.
+A settings canvas panel rather than a floating window, so it sits above the
+HUD (the floating version was hidden behind the Cooldown Manager) and closes
+with the rest of the options. `/rtk ui` and a LibDBIcon minimap button open
+it; the button can be hidden from the page or with `/rtk minimap`. Built once
+and repainted on change.
 
 ```
 ┌ RoleTokens ─────────────────────────────────────────────────┐

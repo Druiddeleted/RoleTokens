@@ -19,6 +19,7 @@ local defaults = {
     verbose = true,
     tokens = {},
     ui = {},
+    minimap = {},     -- LibDBIcon state: { hide = bool, minimapPos = angle }
     debug = false,
 }
 local SCHEMA = 2
@@ -117,6 +118,7 @@ function DB.SetVerbose(on) RoleTokensDB.verbose = on and true or false end
 function DB.Debug()    return RoleTokensDB.debug == true end
 function DB.SetDebug(on) RoleTokensDB.debug = on and true or false end
 function DB.UI()       return RoleTokensDB.ui end
+function DB.Minimap()  return RoleTokensDB.minimap end
 
 -- ---- tokens ---------------------------------------------------------------
 function DB.Tokens() return RoleTokensDB.tokens end

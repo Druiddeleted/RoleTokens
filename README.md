@@ -49,8 +49,9 @@ second. Optionally the token only counts people while they play a given role.
 /rtk token pi                      # see the list and who resolves right now
 ```
 
-Or open the window with `/rtk ui`, or right-click any player, friends-list
-row or guild-roster row and pick **Add … to @pi**.
+Or use the RoleTokens page under Options → AddOns (`/rtk ui` or the minimap
+button opens it), or right-click any player, friends-list row or
+guild-roster row and pick **Add … to @pi**.
 
 Fallbacks belong to the macro, because the client evaluates conditionals at
 cast time and the addon can only decide who is who:
@@ -86,7 +87,8 @@ You are never chosen for a token. Always pair a token with `exists`; a bare
 
 ```
 /rtk                      status: resolved tokens and managed macros
-/rtk ui                   the token window
+/rtk ui                   the RoleTokens page in Options > AddOns
+/rtk minimap              show or hide the minimap button
 /rtk refresh              re-scan and rewrite now
 /rtk forget <MacroName>   stop managing (current text stays)
 /rtk token <name> add | remove | move | role | except | allow | clear | delete

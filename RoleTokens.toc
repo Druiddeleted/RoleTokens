@@ -6,6 +6,11 @@
 ## IconTexture: Interface\Icons\Ability_Hunter_Misdirection
 ## SavedVariables: RoleTokensDB, RoleTokensLog
 
+Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\lib.xml
+
 src\names.lua
 src\expand.lua
 src\db.lua
@@ -14,4 +19,5 @@ src\macros.lua
 src\commands.lua
 src\menu.lua
 src\ui.lua
+src\minimap.lua
 src\core.lua
