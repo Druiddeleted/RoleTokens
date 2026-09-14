@@ -59,8 +59,13 @@ local function buildLines()
         elseif e.kind == "bnet" and e.lastSeen then
             status = "last seen " .. Names.Short(e.lastSeen)
         end
+        local altChar
+        if e.kind == "bnet" then
+            altChar = (r.unit and Names.UnitFull(r.unit)) or e.lastSeen
+            if altChar and e.exclude and e.exclude[Names.Key(altChar)] then altChar = nil end
+        end
         lines[#lines + 1] = { kind = "entry", index = i, entry = e, label = Names.Label(e) .. (e.kind == "bnet" and (GREY .. " (friend)|r") or ""),
-                              status = status, present = r.slot ~= nil,
+                              status = status, present = r.slot ~= nil, altChar = altChar,
                               slot = r.slot and ("@" .. selected .. (r.slot == 1 and "" or r.slot)) or nil }
         if e.kind == "bnet" and e.exclude then
             local ex = {}
@@ -112,8 +117,26 @@ local function getRow(i)
     r.role = CreateFrame("Button", nil, r)
     r.role:SetSize(52, 18)
     r.role:SetPoint("RIGHT", -140, 0)
-    r.status:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
     r.role.text = r.role:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    -- "never this alt": excludes the character a friend is on (or was last seen on)
+    r.never = CreateFrame("Button", nil, r)
+    r.never:SetSize(70, 16)
+    r.never:SetPoint("RIGHT", r.role, "LEFT", -4, -9)
+    r.never.text = r.never:CreateFontString(nil, "OVERLAY", "GameFontDisableSmall")
+    r.never.text:SetPoint("RIGHT"); r.never.text:SetText("|cffff6060never this alt|r")
+    r.never:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
+    r.never:SetScript("OnClick", function()
+        local e = r.line and r.line.entry
+        local char = r.line and r.line.altChar
+        if e and char then DB.SetExclude(e, char, true); Macros.Sync("token changed") end
+    end)
+    r.never:SetScript("OnEnter", function(self)
+        GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+        GameTooltip:AddLine("Never count " .. Names.Label(r.line.entry) .. " on " .. Names.Short(r.line.altChar))
+        GameTooltip:AddLine("|cffaaaaaaThey still count on any other character. Remove the except line to undo.|r", 1, 1, 1, true)
+        GameTooltip:Show()
+    end)
+    r.never:SetScript("OnLeave", GameTooltip_Hide)
     r.role.text:SetPoint("CENTER")
     r.role:SetHighlightTexture("Interface\\Buttons\\UI-Common-MouseHilight", "ADD")
     r.role:SetScript("OnClick", function(self)
@@ -173,13 +196,17 @@ local function paintRows()
                 -- two lines: name on top, status underneath, both up to the controls
                 r.role.text:SetText(line.entry.role and ("|cffffd100" .. line.entry.role .. "|r") or "any")
                 r.label:SetPoint("TOPLEFT", 46, -5); r.label:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
-                r.status:SetPoint("TOPLEFT", 46, -22); r.status:SetPoint("RIGHT", r.role, "LEFT", -6, 0)
+                r.never:SetShown(line.altChar ~= nil)
+                r.status:SetPoint("TOPLEFT", 46, -22)
+                r.status:SetPoint("RIGHT", line.altChar and r.never or r.role, "LEFT", -6, 0)
                 r.status:SetFontObject("GameFontDisableSmall")
             elseif line.kind == "except" then
+                r.never:Hide()
                 r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(50)
                 r.status:SetPoint("LEFT", 100, 0); r.status:SetPoint("RIGHT", r.del, "LEFT", -6, 0)
                 r.status:SetFontObject("GameFontDisableSmall")
             else
+                r.never:Hide()
                 r.label:SetPoint("LEFT", 46, 0); r.label:SetWidth(line.kind == "empty" and 500 or 110)
                 r.status:SetPoint("LEFT", 160, 0); r.status:SetPoint("RIGHT", -8, 0)
                 r.status:SetFontObject("GameFontHighlight")
