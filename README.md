@@ -1,120 +1,172 @@
 # RoleTokens
 
-Write `@tank`, `@healer`, or your own `@pi` in a macro and stop editing it
-every run.
-
-WoW macros only know fixed unit tokens (`@focus`, `@party1`, …). There is no
-`@tank`, and there is certainly no "@the person I Power Infusion". RoleTokens
-fills that gap the only way the client allows: it watches your group and
-rewrites the macro text out of combat, so the macro on your bar always names
-the right unit. Your focus is never touched.
-
-## Use
-
-1. Put a token in any macro, account or character:
-
-   ```
-   #showtooltip
-   /cast [@tank,exists,nodead] [@mouseover,exists,help,nodead] [@party1,exists,nodead] [@pet,exists,nodead] [] Misdirection
-   ```
-
-2. Save it. The addon prints `now managing macro <name>` and swaps `@tank` for
-   the current tank (e.g. `@party3`) immediately.
-3. Every roster or role change rewrites it again. Changes made in combat apply
-   as soon as combat ends.
-
-To change the template later, edit the macro and put the token back in. To
-stop managing it, edit the macro with no token, or `/rtk forget <name>`.
-
-## Built-in tokens: by role
-
-| Token                   | Resolves to                                      |
-|-------------------------|--------------------------------------------------|
-| `@tank` / `@tank1`      | raid main tank assignment, else first tank       |
-| `@tank2` … `@tank40`    | the next tanks, by raid/party index              |
-| `@healer` … `@healer40` | healers by index                                 |
-| `@dps` … `@dps40`       | damage dealers by index                          |
-
-## Your tokens: by priority list
-
-A custom token is a name you choose backed by an ordered list of people.
-`@pi` is the first person on the list who is in your group; `@pi2` is the
-second. Optionally the token only counts people while they play a given role.
+Macros can target `@focus` or `@party3`. They can't target "the tank", and they
+definitely can't target "Bob, unless he brought his warrior". RoleTokens lets
+you write exactly that.
 
 ```
-/rtk token pi add target           # whoever you're targeting
-/rtk token pi add Moonwell         # by name (Name-Realm for other realms)
-/rtk token pi add friend Bob       # a Battle.net friend, on whichever alt they bring
-/rtk token pi role dps             # skip anyone on the list while they're healing or tanking
-/rtk token pi role Bob tank        # but count Bob only while tanking (overrides the list filter)
-/rtk token pi                      # see the list and who resolves right now
+/cast [@tank,exists,nodead] Misdirection
+/cast [@pi,exists,nodead] [@pi2,exists,nodead] [@dps,exists,nodead] [] Power Infusion
 ```
 
-Or use the RoleTokens page under Options → AddOns (`/rtk ui` or the minimap
-button opens it), or right-click any player, friends-list row or
-guild-roster row and pick **Add … to @pi**.
+`@tank` is whoever is tanking. `@pi` is the first person on your Power
+Infusion list who showed up tonight. You write the macro once and it keeps
+pointing at the right people as your group changes.
 
-Fallbacks belong to the macro, because the client evaluates conditionals at
-cast time and the addon can only decide who is who:
+## How it works
+
+The game doesn't let addons cast spells for you, but it does let them edit
+macro text when you're out of combat. So RoleTokens watches your group, and
+every time someone joins, leaves, or changes role, it rewrites your macro so
+`@tank` becomes `@party3` or `@raid17` or whoever it is right now. The macro on
+your bar is always a plain, ordinary macro. Your focus is never touched.
+
+If someone changes during a fight, the macro updates the moment combat ends.
+
+## Getting started
+
+1. Put a token in any macro and save it. RoleTokens notices, says
+   `now managing macro <name>`, and fills in the real unit right away.
+2. That's it. Edit the macro any time; as long as a token is in it, it stays
+   managed. Save it without a token and RoleTokens leaves it alone from then on.
+
+Always pair a token with `exists`, like `[@tank,exists,nodead]`. When there is
+no tank, the token is left as written, `@tank` isn't a real unit, and the
+clause fails so the macro moves on to the next one. That's the whole fallback
+mechanism, and it's why a bare `[@tank]` would be a mistake: it would try to
+cast at nobody instead of moving on.
+
+## The role tokens
+
+These come built in and need no setup.
+
+| Write this            | You get                                                |
+|-----------------------|--------------------------------------------------------|
+| `@tank`               | the raid's assigned main tank, otherwise the first tank |
+| `@tank2`, `@tank3`…   | the other tanks                                        |
+| `@healer`, `@healer2`… | healers, in group order                               |
+| `@dps`, `@dps2`…      | damage dealers, in group order                         |
+
+Roles come from the group role assignment. Someone who never picks a role
+won't show up under any of these.
+
+## Your own tokens
+
+This is the part built for the people you actually play with.
+
+A token of your own is a name plus a ranked list of people. `@pi` is the
+highest-ranked person on your list who is in your group. `@pi2` is the next
+one, and so on. Everyone else is ignored.
+
+Build one from the RoleTokens page (Options, AddOns, RoleTokens, or click the
+minimap button), by right-clicking someone and choosing **Add … to @pi**, or
+from chat:
+
+```
+/rtk token pi add target          whoever you have targeted
+/rtk token pi add friend Bob      a Battle.net friend, whatever character they're on
+/rtk token pi add Moonwell        by name; use Name-Realm for other realms
+/rtk token pi                     show the list and who @pi is right now
+```
+
+The first `add` creates the token. Names are letters only, up to twelve of
+them, and you can't reuse a name the game already knows like `focus` or
+`party`.
+
+**Only when they're playing the right role.** Say the list is for Power
+Infusion and one of your friends sometimes heals. Tell the token to skip
+anyone who isn't dps right now:
+
+```
+/rtk token pi role dps
+```
+
+Or set it per person, which overrides the list setting for them. "Count Alice
+only as dps, and Bob only as tank" is:
+
+```
+/rtk token pi role Alice dps
+/rtk token pi role Bob tank
+```
+
+On the page, that's the small role button on each row.
+
+**Fallbacks go in the macro, not the token.** RoleTokens decides who is who.
+The game decides who is alive, and it decides that at the instant you press the
+key. So write the chain in the macro and let each step carry its own
+conditions:
 
 ```
 /cast [@pi,exists,nodead] [@pi2,exists,nodead] [@dps,exists,nodead] [] Power Infusion
 ```
 
-That reads "my first choice, else my second if the first is dead, else any
-dps". A slot with nobody to fill it is left as written, so `[@pi2,exists]`
-simply fails and the next clause is tried.
+Read it as: my first choice, or my second choice if the first one is dead, or
+any dps if none of my people are here, or my own target.
 
-Details worth knowing:
+## Friends and their alts
 
-- Tokens are account-wide. Names are letters only, 2 to 12 characters, and
-  can't be something the client already treats as a unit (`focus`, `party`…).
-- A Battle.net friend counts on any character they play. To keep one alt out:
-  `/rtk token pi except Bob target` while they're on it (or right-click →
-  **Never <alt> for @pi**). Friends are shown by BattleTag name, never the
-  number; two friends with the same name are told apart by the character each
-  is on or was last seen on.
-- Listing the same person as a character and as a friend is allowed and
-  useful: `Bobmage` at position 1 and friend `Bob` at position 3 means "Bob on
-  his mage is first; Bob on anything else is third".
-- Pins from older versions became tokens named `mytank`, `myhealer` and
-  `mydps`, with a role filter. Change `@tank` to
-  `[@mytank,exists,nodead] [@tank,exists,nodead]` where you relied on a pin.
+When you add someone as a friend, they count on whatever character they log
+in with. Two things make that practical:
 
-You are never chosen for a token. Always pair a token with `exists`; a bare
-`[@tank]` would try to cast at nobody instead of falling through.
+**Keep one alt out.** Bob is great on his mage and useless on his warrior.
+While he's on the warrior, target him and:
+
+```
+/rtk token pi except Bob target
+```
+
+or right-click him and choose **Never Bobwarrior for @pi**. The page shows it
+as an `except` line under his name. `allow` undoes it.
+
+**Rank one alt higher than the rest.** Add the character and the friend
+separately. `Bobmage` at position 1 and friend `Bob` at position 4 means: Bob
+on his mage is my first choice, Bob on anything else is my fourth. A person is
+only ever used once per token, so there's no double counting.
+
+Friends are shown by the name part of their BattleTag, never the number. If
+two friends share a name, the page tells them apart by the character each one
+is on, or was last seen on.
+
+## The page
+
+Options, AddOns, RoleTokens. Or `/rtk ui`, or the minimap button.
+
+Left side: the built-in tokens, then yours. Right side: the selected token's
+list. A green dot means that person is in your group and counts right now,
+and the slot they fill is shown at the end of the row. A grey dot with a
+reason (`not in group`, `healing · skipped`, `excluded`) means they don't.
+The bottom line shows what each slot resolves to at this moment, which is the
+quickest way to answer "why did my macro pick Carol".
+
+The **+ Add** button opens a picker over your group, your online friends and
+your online guild members, with a search box. Typing a name that matches
+nothing and pressing Enter adds it as written.
+
+The minimap button can be turned off with the checkbox at the top of the page
+or with `/rtk minimap`.
 
 ## Commands
 
 ```
-/rtk                      status: resolved tokens and managed macros
-/rtk ui                   the RoleTokens page in Options > AddOns
-/rtk minimap              show or hide the minimap button
-/rtk refresh              re-scan and rewrite now
-/rtk forget <MacroName>   stop managing (current text stays)
+/rtk                     what every token resolves to, and which macros are managed
+/rtk ui                  open the page
+/rtk refresh             rewrite macros now
+/rtk forget <MacroName>  stop managing a macro; its current text stays
 /rtk token <name> add | remove | move | role | except | allow | clear | delete
-/rtk quiet | verbose      chat notices
-/rtk debug                log each sync's duration to SavedVariables
+/rtk minimap             show or hide the minimap button
+/rtk quiet, /rtk verbose chat notices off or on
 ```
 
-## Who this is for
+## Good to know
 
-- **Hunter** Misdirection, **Rogue** Tricks of the Trade → `@tank`, or a
-  `@md` list of your regular tanks.
-- **Priests** Power Infusion → `@pi`, the people you actually want to buff.
-- **Druids** Innervate → `@innervate`, or `@healer`.
-- **Healers** with tank externals: Pain Suppression, Guardian Spirit, Ironbark,
-  Life Cocoon, Blessing of Sacrifice → `@tank`, `@tank2`.
-- **Warriors** Intervene, **Monks** Tiger's Lust on the tank → `@tank`.
-
-## Limits
-
-- Macro edits are blocked in combat by the client, so a change mid-fight
-  applies after combat.
-- Macro bodies cap at 255 characters after expansion (`raid12` is longer than
-  `pi`); the addon warns and leaves the macro alone if it would overflow.
-- Roles come from the group role assignment. In a premade group with no role
-  check, players who never set a role won't resolve for role tokens or role
-  filters.
-- The addon does nothing per frame. Work happens only when the roster, roles
-  or macros change, and one pass is bounded by group size × tokens × entries.
+- Tokens are shared across all your characters. Your Power Infusion list is
+  only useful on a priest, but it does no harm anywhere else.
+- Macros can't be edited in combat, so a change mid-fight lands when combat
+  ends.
+- Macros cap at 255 characters after expansion, and `raid17` is longer than
+  `pi`. If a macro would overflow, RoleTokens says so and leaves it alone.
+- Nothing runs in the background. RoleTokens only does work when your group,
+  roles or macros change, and one pass is a handful of comparisons.
+- If you used pins in an older version, they became tokens named `mytank`,
+  `myhealer` and `mydps` with a role filter. Where a macro relied on a pin,
+  change `@tank` to `[@mytank,exists,nodead] [@tank,exists,nodead]`.
