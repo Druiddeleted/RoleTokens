@@ -25,11 +25,16 @@ local function identify(cd)
         if cd.name:find("-", 1, true) then full = Names.Normalize(cd.name)
         else full = cd.name .. "-" .. ((cd.server and cd.server ~= "" and cd.server:gsub("%s", "")) or Names.OwnRealm()) end
     end
-    tag = tag or cd.battleTag or (cd.accountInfo and cd.accountInfo.battleTag)
-    if not tag and cd.guid and C_BattleNet and C_BattleNet.GetAccountInfoByGUID then
-        local acct = C_BattleNet.GetAccountInfoByGUID(cd.guid)
-        tag = acct and acct.battleTag
+    local acct = cd.accountInfo
+    if not acct and cd.guid and C_BattleNet and C_BattleNet.GetAccountInfoByGUID then
+        acct = C_BattleNet.GetAccountInfoByGUID(cd.guid)
     end
+    if not acct and cd.bnetIDAccount and C_BattleNet and C_BattleNet.GetAccountInfoByID then
+        acct = C_BattleNet.GetAccountInfoByID(cd.bnetIDAccount)
+    end
+    tag = tag or cd.battleTag or (acct and acct.battleTag)
+    -- friends-list rows carry no character name, but the account says which one they're on
+    if not full and acct then full = Names.FriendCharacter(acct) end
     if full and Names.Key(full) == Names.Key(Names.UnitFull("player") or "") then return nil end
     return full, tag
 end
