@@ -114,6 +114,7 @@ function DB.Each(fn)
 end
 
 function DB.DropSelf() return RoleTokensDB.dropSelf ~= false end
+function DB.SetDropSelf(on) RoleTokensDB.dropSelf = on and true or false end
 function DB.Verbose()  return RoleTokensDB.verbose ~= false end
 function DB.SetVerbose(on) RoleTokensDB.verbose = on and true or false end
 function DB.Debug()    return RoleTokensDB.debug == true end

@@ -40,8 +40,18 @@ token for the real unit. From then on the macro follows your group.
 
 `@tank` is the raid's assigned main tank if there is one, otherwise the first
 tank. `@tank2`, `@healer2`, `@dps3` and so on count through the rest in group
-order. You are never picked yourself: a tank who writes `@tank` gets the other
-tank, which is what you want for Tricks or an external.
+order.
+
+You are never picked yourself, so a tank who writes `@tank` gets the other
+tank, which is what you want for Tricks or an external. For something you can
+also cast on yourself, like Innervate, make yourself the last resort in the
+macro:
+
+```
+/cast [@healer,exists,nodead] [@player] Innervate
+```
+
+If you'd rather be counted like anyone else, `/rtk self` turns that on.
 
 One rule to keep: always pair a token with `exists`. When there is no tank,
 the token is left as written, `@tank` isn't a real unit, and the clause fails
@@ -161,6 +171,7 @@ or with `/rtk minimap`.
 /rtk forget <MacroName>  stop managing a macro; its current text stays
 /rtk token <name> add | remove | move | role | except | allow | clear | delete
 /rtk minimap             show or hide the minimap button
+/rtk self                let tokens pick you too (off by default)
 /rtk quiet, /rtk verbose chat notices off or on
 ```
 
