@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.2
+
+- Fixed a "secret boolean" Lua warning blamed on RoleTokens when scrolling the
+  guild/communities roster after right-clicking a member. RoleTokens no longer
+  adds itself to the guild/communities roster's right-click menu; add guildmates
+  from the RoleTokens window's picker instead.
+
 ## 0.2.1
 
 - The options page can now add a friend exclusion: a "never this alt" control

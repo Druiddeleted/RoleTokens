@@ -9,9 +9,12 @@ local DB, Names, Macros = NS.DB, NS.Names, NS.Macros
 -- Battle.net account when they are a friend); BN_FRIEND rows carry
 -- battleTag; guild rows carry name+server+guid.
 
+-- No COMMUNITIES_* menus: our callback runs inside the member list's right-click
+-- stack, which leaves taint on that frame, and its scroll initializer then trips
+-- over secret booleans (CommunitiesMemberList.lua IsTruncated). Guildmates can
+-- still be added from the window's picker.
 local TAGS = { "PARTY", "RAID_PLAYER", "RAID", "TARGET", "FOCUS", "PLAYER",
-               "FRIEND", "BN_FRIEND", "BN_FRIEND_OFFLINE", "GUILD", "GUILD_OFFLINE",
-               "COMMUNITIES_GUILD_MEMBER", "COMMUNITIES_WOW_MEMBER" }
+               "FRIEND", "BN_FRIEND", "BN_FRIEND_OFFLINE", "GUILD", "GUILD_OFFLINE" }
 
 -- Work out who the menu is about: character "Name-Realm" (or nil) and BattleTag (or nil).
 local function identify(cd)
